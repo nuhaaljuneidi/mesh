@@ -1,0 +1,1157 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesh Strategy by Physics Type | Dr. Nuha Aljuneidi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            color: white;
+            padding: 32px 40px;
+            text-align: left;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.1em;
+            margin: 0 0 8px 0;
+            text-shadow: none;
+            letter-spacing: 0.2px;
+        }
+
+        .header .subtitle {
+            font-size: 1.05em;
+            opacity: 0.9;
+            margin: 0;
+            line-height: 1.4;
+            max-width: 760px;
+        }
+
+        .header .credit {
+            font-size: 0.9em;
+            opacity: 0.85;
+            text-align: right;
+            line-height: 1.35;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 900px) {
+            .header-top {
+                flex-direction: column;
+            }
+
+            .header .credit {
+                text-align: left;
+                white-space: normal;
+            }
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            padding: 40px;
+        }
+
+        .controls-panel {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #dee2e6;
+        }
+
+            .controls-panel h2 {
+                color: #111827;
+                margin-bottom: 25px;
+                font-size: 1.6em;
+                border-bottom: 3px solid #111827;
+                padding-bottom: 10px;
+            }
+
+        .physics-selector {
+            margin-bottom: 30px;
+        }
+
+        .physics-option {
+            background: white;
+            border: 3px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+            .physics-option:hover {
+                transform: translateX(5px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            }
+
+            .physics-option.active {
+                border-color: #e74c3c;
+                background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+                box-shadow: 0 5px 20px rgba(231, 76, 60, 0.3);
+            }
+
+            .physics-option h3 {
+                color: #2c3e50;
+                margin-bottom: 8px;
+                font-size: 1.2em;
+            }
+
+            .physics-option p {
+                color: #7f8c8d;
+                font-size: 0.95em;
+                line-height: 1.5;
+            }
+
+            .physics-option .badge {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: #e74c3c;
+                color: white;
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-size: 0.85em;
+                font-weight: 600;
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+
+            .physics-option.active .badge {
+                opacity: 1;
+            }
+
+        /* Dot Indicators */
+        .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        .dot-red {
+            background: #e74c3c;
+        }
+
+        .dot-blue {
+            background: #3498db;
+        }
+
+        .dot-yellow {
+            background: #f39c12;
+        }
+
+        .dot-green {
+            background: #2ecc71;
+        }
+
+        .dot-gray {
+            background: #95a5a6;
+        }
+
+        .equation-display {
+            background: white;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+            .equation-display h4 {
+                color: #3498db;
+                margin-bottom: 15px;
+                font-size: 1.1em;
+            }
+
+        .equation {
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            line-height: 1.8;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .equation-term {
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+            .equation-term.highlight {
+                background: #f39c12;
+                color: white;
+                font-weight: bold;
+            }
+
+        .visualization-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #dee2e6;
+        }
+
+            .visualization-panel h2 {
+                color: #2c3e50;
+                margin-bottom: 20px;
+                font-size: 1.6em;
+            }
+
+        canvas {
+            border: 3px solid #34495e;
+            border-radius: 12px;
+            width: 100%;
+            background: #2c3e50;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .metrics-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+            .metric-card.warning {
+                background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            }
+
+            .metric-card.danger {
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            }
+
+            .metric-card h4 {
+                font-size: 0.9em;
+                opacity: 0.9;
+                margin-bottom: 10px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+
+            .metric-card .value {
+                font-size: 2.2em;
+                font-weight: 700;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            }
+
+            .metric-card .label {
+                font-size: 0.85em;
+                opacity: 0.8;
+                margin-top: 5px;
+            }
+
+        .info-panel {
+            background: linear-gradient(135deg, #e8f4f8 0%, #d4e9f7 100%);
+            border-left: 5px solid #3498db;
+            padding: 25px;
+            margin-top: 25px;
+            border-radius: 10px;
+        }
+
+            .info-panel h3 {
+                color: #2980b9;
+                margin-bottom: 15px;
+                font-size: 1.3em;
+            }
+
+            .info-panel ul {
+                margin-left: 20px;
+                color: #34495e;
+                line-height: 1.8;
+            }
+
+            .info-panel li {
+                margin-bottom: 8px;
+            }
+
+        .animation-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+            }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+        }
+
+            .btn-secondary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 15px rgba(127, 140, 141, 0.4);
+            }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .metrics-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 25px;
+            height: 25px;
+            border-radius: 4px;
+            border: 2px solid #34495e;
+        }
+
+        .legend-text {
+            font-size: 0.9em;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .transition-indicator {
+            background: #f39c12;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-align: center;
+            font-weight: 600;
+            margin-top: 15px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+            .transition-indicator.show {
+                opacity: 1;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-top">
+                <div>
+                    <h1>Mesh Strategy by Physics Type</h1>
+                    <p class="subtitle">Same geometry. Different governing equations. Different mesh requirements.</p>
+                </div>
+                <div class="credit">
+                    Developed by <b>Dr. Nuha Aljuneidi</b><br />
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Left Panel: Controls -->
+            <div class="controls-panel">
+                <h2>Select Physics (changes mesh drivers)</h2>
+                <div class="physics-selector">
+                    <div class="physics-option active" onclick="selectPhysics('conduction', this)">
+                        <div class="badge">✓ ACTIVE</div>
+                        <h3><span class="dot dot-red"></span> Pure Conduction</h3>
+                        <p>Heat diffusion only - no fluid motion</p>
+                    </div>
+
+                    <div class="physics-option" onclick="selectPhysics('forced', this)">
+                        <div class="badge">✓ ACTIVE</div>
+                        <h3><span class="dot dot-blue"></span> Forced Convection</h3>
+                        <p>Fluid flow driven by external pressure</p>
+                    </div>
+
+                    <div class="physics-option" onclick="selectPhysics('natural', this)">
+                        <div class="badge">✓ ACTIVE</div>
+                        <h3><span class="dot dot-yellow"></span> Natural Convection</h3>
+                        <p>Buoyancy-driven flow (rooms, cavities, solar chimneys, PCM, etc.)</p>
+                    </div>
+
+                    <div class="physics-option" onclick="selectPhysics('phase_change', this)">
+                        <div class="badge">✓ ACTIVE</div>
+                        <h3><span class="dot dot-green"></span> Phase Change</h3>
+                        <p>Solid-liquid interface tracking</p>
+                    </div>
+
+                    <div class="physics-option" onclick="selectPhysics('structural', this)">
+                        <div class="badge">✓ ACTIVE</div>
+                        <h3><span class="dot dot-gray"></span> Structural (FEA)</h3>
+                        <p>Finite Element Analysis (FEA): stress/strain, not flow</p>
+                    </div>
+                </div>
+
+                <div class="equation-display" id="equationDisplay">
+                    <h4>Governing Equations</h4>
+                    <div class="equation" id="equationContent"></div>
+                    <p style="margin-top:10px;color:#6b7280;font-size:0.9em;">Mesh rule: refine where the solution gradients are highest (∇T, ∇u, ∇σ, moving interface).</p>
+                </div>
+
+                <div class="animation-controls">
+                    <button class="btn btn-primary" onclick="toggleAnimation()">
+                        <span id="playPauseText">⏸ Pause</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetView()">🔄 Reset</button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Visualization -->
+            <div class="visualization-panel">
+                <h2>Mesh Morphing Animation</h2>
+                <canvas id="meshCanvas" width="900" height="600"></canvas>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: rgba(52, 152, 219, 0.3); border-color: #3498db;"></div>
+                        <div class="legend-text">Core Domain</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: rgba(231, 76, 60, 0.5); border-color: #e74c3c;"></div>
+                        <div class="legend-text">Boundary Layer</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: rgba(241, 196, 15, 0.5); border-color: #f1c40f;"></div>
+                        <div class="legend-text">Refined Region</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: rgba(46, 204, 113, 0.5); border-color: #2ecc71;"></div>
+                        <div class="legend-text">Phase Interface</div>
+                    </div>
+                </div>
+
+                <div class="transition-indicator" id="transitionIndicator">
+                    Morphing mesh...
+                </div>
+
+                <div class="metrics-bar">
+                    <div class="metric-card" id="cellCountCard">
+                        <h4>Total Cells</h4>
+                        <div class="value" id="cellCount">10,000</div>
+                        <div class="label">mesh elements</div>
+                    </div>
+                    <div class="metric-card" id="compTimeCard">
+                        <h4>Est. Comp. Time</h4>
+                        <div class="value" id="compTime">2 hrs</div>
+                        <div class="label">on 16 cores</div>
+                    </div>
+                    <div class="metric-card" id="complexityCard">
+                        <h4>Mesh Complexity</h4>
+                        <div class="value" id="complexity">Low</div>
+                        <div class="label">refinement level</div>
+                    </div>
+                </div>
+
+                <div class="info-panel" id="infoPanel">
+                    <h3>Why This Mesh?</h3>
+                    <ul id="meshReasoning"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('meshCanvas');
+        const ctx = canvas.getContext('2d');
+        let currentPhysics = 'conduction';
+        let animationRunning = true;
+        let animationFrame;
+        let transitionProgress = 1; // 0 to 1
+        let targetMeshConfig = null;
+        let currentMeshConfig = null;
+        let startMeshConfig = null;
+        let time = 0; // For animation effects
+
+        // Mesh configurations for each physics type
+        const meshConfigs = {
+            conduction: {
+                cellCount: 10000,
+                compTime: '2 hrs',
+                complexity: 'Low',
+                complexityClass: '',
+                boundaryLayers: false,
+                refinementZones: [],
+                baseCellSize: 20,
+                wallCellSize: 20,
+                description: 'Uniform coarse mesh',
+                equations: `<span class="equation-term highlight">∂T/∂t</span> = α∇²T
+
+Heat equation (diffusion only)
+α = thermal diffusivity
+
+Dominant mesh driver: temperature gradient ∇T`,
+                reasoning: [
+                    '<b>Key takeaway: mesh follows the dominant gradient in the governing equations.</b>',
+                    'No fluid motion = no boundary layers needed',
+                    'Uniform mesh captures temperature gradients',
+                    'Cell size based on thermal penetration depth only',
+                    'Coarsest acceptable mesh for this geometry',
+                    'Computational cost is minimal'
+                ]
+            },
+            forced: {
+                cellCount: 250000,
+                compTime: '18 hrs',
+                complexity: 'High',
+                complexityClass: 'warning',
+                boundaryLayers: true,
+                blThickness: 15,
+                blLayers: 12,
+                refinementZones: [],
+                baseCellSize: 15,
+                wallCellSize: 0.5,
+                description: 'Boundary layer mesh required',
+                equations: `<span class="equation-term">∂u/∂t</span> + <span class="equation-term highlight">u·∇u</span> = -∇p + <span class="equation-term highlight">ν∇²u</span>
+∇·u = 0
+
+<span class="equation-term">∂T/∂t</span> + <span class="equation-term highlight">u·∇T</span> = α∇²T
+
+Navier-Stokes + Energy (convection dominant)
+
+Dominant mesh driver: near-wall shear (y+) + boundary layer gradients`,
+                reasoning: [
+                    '<b>Key takeaway: mesh follows the dominant gradient in the governing equations.</b>',
+                    'Convection term (u·∇u) requires boundary layer resolution',
+                    'Typical inflation layer setup: ~10–15 layers, growth ratio ~1.1–1.3, first cell set by target y+.',
+                    'Viscous effects near wall → very fine first cell (y+ requirements)',
+                    'High aspect ratio cells acceptable (flow aligned with wall)',
+                    '25× more cells than pure conduction!',
+                    'Streamwise refinement minimal if flow is developed',
+                    'This is classic CFD meshing'
+                ]
+            },
+            natural: {
+                cellCount: 450000,
+                compTime: '32 hrs',
+                complexity: 'Very High',
+                complexityClass: 'danger',
+                boundaryLayers: true, // exists, but not the ONLY refinement strategy
+                refinementZones: ['buoyancy'],
+                baseCellSize: 8,
+                wallCellSize: 8,
+                volumeRefinement: true,
+                description: 'Volume refinement throughout',
+                equations: `<span class="equation-term">∂u/∂t</span> + u·∇u = -∇p + ν∇²u + <span class="equation-term highlight">gβ(T-T₀)</span>
+∇·u = 0
+
+∂T/∂t + u·∇T = α∇²T
+
+Buoyancy term drives flow in ALL directions
+
+Dominant mesh driver: buoyancy plumes in the volume`,
+                reasoning: [
+                    '<b>Key takeaway: mesh follows the dominant gradient in the governing equations.</b>',
+                    'Buoyancy term (gβΔT) creates flow perpendicular to walls!',
+                    'Boundary layers exist, BUT volume refinement is also required (plumes/recirculation).',
+                    'Flow direction changes - plumes rise, downdrafts form',
+                    'Avoid extremely stretched cells everywhere; keep cells more isotropic in the core.',
+                    'Common in cavities/rooms/PCM systems and needs volume refinement (plumes + recirculation).',
+                    '45× more cells than conduction, 1.8× more than forced convection'
+                ]
+            },
+            phase_change: {
+                cellCount: 800000,
+                compTime: '65 hrs',
+                complexity: 'Extreme',
+                complexityClass: 'danger',
+                boundaryLayers: false,
+                refinementZones: ['interface', 'buoyancy'],
+                baseCellSize: 10,
+                wallCellSize: 10,
+                interfaceRefinement: true,
+                volumeRefinement: true,
+                description: 'Interface tracking + natural convection',
+                equations: `ρ∂h/∂t + ρu·∇h = ∇·(k∇T)
+h = c_pT + <span class="equation-term highlight">fL</span>
+
+∂u/∂t + u·∇u = -∇p + ν∇²u + gβ(T-T₀)
+
+Latent heat (fL) creates sharp interface
+f = liquid fraction (0 to 1)
+
+Dominant mesh driver: moving interface + sharp gradients`,
+                reasoning: [
+                    '<b>Key takeaway: mesh follows the dominant gradient in the governing equations.</b>',
+                    'Sharp solid-liquid interface needs ultra-fine mesh',
+                    'Interface moves over time → adaptive refinement ideal',
+                    'Natural convection in liquid phase requires volume refinement',
+                    'Stefan number determines interface thickness',
+                    'Highest cell count for same geometry',
+                    'Most computationally expensive',
+                    '80× more cells than pure conduction!'
+                ]
+            },
+            structural: {
+                cellCount: 35000,
+                compTime: '0.5 hrs',
+                complexity: 'Moderate',
+                complexityClass: 'warning',
+                boundaryLayers: false,
+                refinementZones: ['stress'],
+                baseCellSize: 25,
+                wallCellSize: 25,
+                stressRefinement: true,
+                description: 'Stress concentration refinement',
+                equations: `∇·σ + f = 0
+σ = C:ε
+
+Equilibrium equation (force balance)
+σ = stress tensor, ε = strain tensor
+C = material stiffness matrix
+
+COMPLETELY DIFFERENT from fluid/thermal!
+
+Dominant mesh driver: stress concentration ∇σ`,
+                reasoning: [
+                    '<b>Key takeaway: mesh follows the dominant gradient in the governing equations.</b>',
+                    'Different governing equations entirely (no Navier-Stokes!)',
+                    'No boundary layers - no flow to resolve',
+                    'Refinement at geometric features: corners, holes, loads',
+                    'Stress concentrations drive mesh requirements',
+                    'Can use much coarser mesh than CFD of same geometry',
+                    'Element type matters (hex vs tet) more than for fluids',
+                    'Wall proximity irrelevant unless that\'s where stress peaks'
+                ]
+            }
+        };
+
+        // Initialize
+        currentMeshConfig = JSON.parse(JSON.stringify(meshConfigs[currentPhysics]));
+        targetMeshConfig = JSON.parse(JSON.stringify(meshConfigs[currentPhysics]));
+        startMeshConfig = JSON.parse(JSON.stringify(meshConfigs[currentPhysics]));
+        updateEquations(currentPhysics);
+        updateInfoPanel(currentPhysics);
+        updateMetrics(currentMeshConfig);
+
+        function selectPhysics(type, el) {
+            if (currentPhysics === type) return;
+
+            // Visual feedback
+            document.querySelectorAll('.physics-option').forEach(opt => opt.classList.remove('active'));
+            if (el) el.classList.add('active');
+
+            // Start transition
+            currentPhysics = type;
+            startMeshConfig = JSON.parse(JSON.stringify(currentMeshConfig));
+            targetMeshConfig = JSON.parse(JSON.stringify(meshConfigs[type]));
+            transitionProgress = 0;
+
+            // Show transition indicator
+            const indicator = document.getElementById('transitionIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => indicator.classList.remove('show'), 2000);
+
+            // Update equation display
+            updateEquations(type);
+
+            // Update info panel immediately
+            updateInfoPanel(type);
+        }
+
+        function updateEquations(type) {
+            const config = meshConfigs[type];
+            document.getElementById('equationContent').innerHTML = config.equations;
+        }
+
+        function updateInfoPanel(type) {
+            const config = meshConfigs[type];
+            const reasoningList = document.getElementById('meshReasoning');
+            reasoningList.innerHTML = '';
+            config.reasoning.forEach(reason => {
+                const li = document.createElement('li');
+                li.innerHTML = reason; // Changed to innerHTML to support bold tag
+                reasoningList.appendChild(li);
+            });
+        }
+
+        function updateMetrics(config) {
+            document.getElementById('cellCount').textContent = config.cellCount.toLocaleString();
+            document.getElementById('compTime').textContent = config.compTime;
+            document.getElementById('complexity').textContent = config.complexity;
+
+            // Update card colors
+            const cellCard = document.getElementById('cellCountCard');
+            const compCard = document.getElementById('compTimeCard');
+            const complexCard = document.getElementById('complexityCard');
+
+            // Reset classes
+            [cellCard, compCard, complexCard].forEach(card => {
+                card.className = 'metric-card';
+            });
+
+            // Apply appropriate class
+            if (config.complexityClass) {
+                cellCard.classList.add(config.complexityClass);
+                compCard.classList.add(config.complexityClass);
+                complexCard.classList.add(config.complexityClass);
+            }
+        }
+
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function drawMesh() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(0, 0, w, h);
+
+            // Smooth transition
+            if (transitionProgress < 1) {
+                transitionProgress += 0.02;
+                const easedProgress = easeInOutCubic(Math.min(transitionProgress, 1));
+
+                // Interpolate mesh configuration
+                currentMeshConfig.baseCellSize = lerp(
+                    startMeshConfig.baseCellSize,
+                    targetMeshConfig.baseCellSize,
+                    easedProgress
+                );
+                currentMeshConfig.wallCellSize = lerp(
+                    startMeshConfig.wallCellSize,
+                    targetMeshConfig.wallCellSize,
+                    easedProgress
+                );
+
+                // Update metrics during transition
+                const transitionCellCount = Math.round(lerp(
+                    parseFloat(startMeshConfig.cellCount),
+                    parseFloat(targetMeshConfig.cellCount),
+                    easedProgress
+                ));
+
+                const tempConfig = { ...targetMeshConfig };
+                tempConfig.cellCount = transitionCellCount;
+                updateMetrics(tempConfig);
+            } else {
+                currentMeshConfig = JSON.parse(JSON.stringify(targetMeshConfig));
+                updateMetrics(currentMeshConfig);
+            }
+
+            // Draw geometry (PCM tank)
+            drawGeometry();
+
+            // Draw mesh based on current configuration
+            if (currentPhysics === 'conduction') {
+                drawUniformMesh();
+            } else if (currentPhysics === 'forced') {
+                drawBoundaryLayerMesh();
+            } else if (currentPhysics === 'natural') {
+                drawNaturalConvectionMesh();
+            } else if (currentPhysics === 'phase_change') {
+                drawPhaseChangeMesh();
+            } else if (currentPhysics === 'structural') {
+                drawStructuralMesh();
+            }
+
+            // Draw labels
+            drawLabels();
+        }
+
+        function drawGeometry() {
+            // Draw tank outline
+            ctx.strokeStyle = '#ecf0f1';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(100, 100, 700, 400);
+
+            // Draw heated wall (bottom)
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(100, 500, 700, 20);
+            ctx.fillStyle = '#ecf0f1';
+            ctx.font = 'bold 14px Arial';
+
+            if (currentPhysics === 'structural') {
+                ctx.fillText('Support / Constraint Region', 350, 535);
+
+                // Simple support markers
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath(); ctx.moveTo(110, 520); ctx.lineTo(140, 550); ctx.lineTo(80, 550); ctx.closePath(); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(790, 520); ctx.lineTo(820, 550); ctx.lineTo(760, 550); ctx.closePath(); ctx.fill();
+            } else {
+                ctx.fillText('Heated Wall', 400, 535);
+            }
+        }
+
+        function drawUniformMesh() {
+            const cellSize = currentMeshConfig.baseCellSize;
+
+            ctx.strokeStyle = 'rgba(52, 152, 219, 0.4)';
+            ctx.lineWidth = 1;
+
+            // Horizontal lines
+            for (let y = 100; y <= 500; y += cellSize) {
+                ctx.beginPath();
+                ctx.moveTo(100, y);
+                ctx.lineTo(800, y);
+                ctx.stroke();
+            }
+
+            // Vertical lines
+            for (let x = 100; x <= 800; x += cellSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 100);
+                ctx.lineTo(x, 500);
+                ctx.stroke();
+            }
+
+            // Fill cells
+            ctx.fillStyle = 'rgba(52, 152, 219, 0.15)';
+            for (let y = 100; y < 500; y += cellSize) {
+                for (let x = 100; x < 800; x += cellSize) {
+                    ctx.fillRect(x, y, cellSize, cellSize);
+                }
+            }
+        }
+
+        function drawBoundaryLayerMesh() {
+            const baseCellSize = currentMeshConfig.baseCellSize;
+            const wallCellHeight = currentMeshConfig.wallCellSize;
+            const blThickness = currentMeshConfig.blThickness || 15;
+            const blLayers = currentMeshConfig.blLayers || 12;
+
+            // Draw boundary layer cells near bottom wall
+            let y = 500;
+            let cellHeight = wallCellHeight;
+            const growthRatio = 1.2;
+
+            ctx.strokeStyle = 'rgba(231, 76, 60, 0.6)';
+            ctx.lineWidth = 1;
+
+            for (let i = 0; i < blLayers; i++) {
+                y -= cellHeight;
+
+                // Draw horizontal line
+                ctx.beginPath();
+                ctx.moveTo(100, y);
+                ctx.lineTo(800, y);
+                ctx.stroke();
+
+                // Fill BL cells
+                ctx.fillStyle = 'rgba(231, 76, 60, 0.3)';
+                for (let x = 100; x < 800; x += baseCellSize * 2) {
+                    ctx.fillRect(x, y, baseCellSize * 2, cellHeight);
+                }
+
+                cellHeight *= growthRatio;
+            }
+
+            // Draw vertical lines in BL region
+            ctx.strokeStyle = 'rgba(231, 76, 60, 0.6)';
+            for (let x = 100; x <= 800; x += baseCellSize * 2) {
+                ctx.beginPath();
+                ctx.moveTo(x, 500);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+
+            // Core region mesh
+            ctx.strokeStyle = 'rgba(52, 152, 219, 0.4)';
+            for (let yy = y; yy >= 100; yy -= baseCellSize) {
+                ctx.beginPath();
+                ctx.moveTo(100, yy);
+                ctx.lineTo(800, yy);
+                ctx.stroke();
+            }
+
+            for (let x = 100; x <= 800; x += baseCellSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 100);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+
+            // Fill core cells
+            ctx.fillStyle = 'rgba(52, 152, 219, 0.15)';
+            for (let yy = 100; yy < y; yy += baseCellSize) {
+                for (let x = 100; x < 800; x += baseCellSize) {
+                    ctx.fillRect(x, yy, baseCellSize, baseCellSize);
+                }
+            }
+        }
+
+        function drawNaturalConvectionMesh() {
+            const cellSize = currentMeshConfig.baseCellSize;
+
+            // Draw refined mesh throughout
+            ctx.strokeStyle = 'rgba(241, 196, 15, 0.3)';
+            ctx.lineWidth = 0.5;
+
+            // Horizontal lines
+            for (let y = 100; y <= 500; y += cellSize) {
+                ctx.beginPath();
+                ctx.moveTo(100, y);
+                ctx.lineTo(800, y);
+                ctx.stroke();
+            }
+
+            // Vertical lines
+            for (let x = 100; x <= 800; x += cellSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 100);
+                ctx.lineTo(x, 500);
+                ctx.stroke();
+            }
+
+            // Simulate volume refinement (plumes)
+            for (let x = 100; x < 800; x += cellSize) {
+                for (let y = 100; y < 500; y += cellSize) {
+                    // Create plume-like structures based on sine waves and noise
+                    const plumeX1 = 300 + Math.sin(y * 0.05 + time * 0.5) * 20;
+                    const plumeX2 = 600 + Math.sin(y * 0.04 - time * 0.5) * 30;
+
+                    const dist1 = Math.abs(x - plumeX1);
+                    const dist2 = Math.abs(x - plumeX2);
+
+                    if (dist1 < 60 || dist2 < 80 || y > 450) {
+                        ctx.fillStyle = 'rgba(241, 196, 15, 0.4)';
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                        // Add extra cross-hatch for "refinement" visual
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x + cellSize, y + cellSize);
+                        ctx.stroke();
+                    } else {
+                        ctx.fillStyle = 'rgba(52, 152, 219, 0.1)';
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                    }
+                }
+            }
+        }
+
+        function drawPhaseChangeMesh() {
+            const baseSize = 25; // coarse background
+
+            // Draw background coarse mesh
+            ctx.strokeStyle = 'rgba(52, 152, 219, 0.2)';
+            ctx.lineWidth = 1;
+            for (let x = 100; x <= 800; x += baseSize) {
+                ctx.beginPath(); ctx.moveTo(x, 100); ctx.lineTo(x, 500); ctx.stroke();
+            }
+            for (let y = 100; y <= 500; y += baseSize) {
+                ctx.beginPath(); ctx.moveTo(100, y); ctx.lineTo(800, y); ctx.stroke();
+            }
+
+            // Define Interface Shape (moving)
+            const interfaceX = 450 + Math.sin(time * 0.5) * 100;
+
+            // Draw highly refined region around interface
+            const refineWidth = 60;
+            const fineSize = 4;
+
+            for (let x = 100; x <= 800; x += fineSize) {
+                for (let y = 100; y <= 500; y += fineSize) {
+                    // Curve equation
+                    const curveX = interfaceX + Math.sin(y * 0.02) * 30;
+                    const dist = Math.abs(x - curveX);
+
+                    if (dist < refineWidth) {
+                        // Very fine mesh near interface
+                        ctx.fillStyle = `rgba(46, 204, 113, ${0.1 + (1 - dist / refineWidth) * 0.3})`;
+                        ctx.fillRect(x, y, fineSize, fineSize);
+                    } else if (x < curveX) {
+                        // Liquid side (Natural Convection needed here)
+                        // Only draw sometimes to simulate "medium" refinement
+                        if (x % 10 === 0 && y % 10 === 0) {
+                            ctx.fillStyle = 'rgba(241, 196, 15, 0.2)';
+                            ctx.fillRect(x, y, 10, 10);
+                        }
+                    }
+                }
+            }
+
+            // Draw the interface line
+            ctx.beginPath();
+            ctx.strokeStyle = '#2ecc71'; // Green
+            ctx.lineWidth = 3;
+            for (let y = 100; y <= 500; y += 5) {
+                const curveX = interfaceX + Math.sin(y * 0.02) * 30;
+                if (y === 100) ctx.moveTo(curveX, y);
+                else ctx.lineTo(curveX, y);
+            }
+            ctx.stroke();
+
+            // Labels
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('Liquid region (convection + conduction)', interfaceX - 240, 300);
+            ctx.fillText('Solid region (mostly conduction)', interfaceX + 60, 300);
+        }
+
+        function drawStructuralMesh() {
+            const baseSize = 30;
+
+            // Draw background mesh (coarse loop for performance)
+            ctx.strokeStyle = 'rgba(52, 152, 219, 0.3)';
+            ctx.lineWidth = 1;
+
+            // Loop through grid - coarse step 30
+            for (let x = 100; x <= 800; x += 30) {
+                for (let y = 100; y <= 500; y += 30) {
+                    ctx.strokeStyle = 'rgba(52, 152, 219, 0.3)';
+                    ctx.strokeRect(x, y, 30, 30);
+                }
+            }
+
+            // Draw refined zones separately (corners)
+            const refineSize = 5;
+            const refineColor = 'rgba(231, 76, 60, 0.4)';
+
+            // Function to draw refined region
+            function drawRefinedZone(centerX, centerY, radius) {
+                const startX = Math.max(100, centerX - radius);
+                const endX = Math.min(800, centerX + radius);
+                const startY = Math.max(100, centerY - radius);
+                const endY = Math.min(500, centerY + radius);
+
+                for (let x = startX; x < endX; x += refineSize) {
+                    for (let y = startY; y < endY; y += refineSize) {
+                        const dist = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+                        if (dist < radius) {
+                            ctx.fillStyle = refineColor;
+                            ctx.fillRect(x, y, refineSize, refineSize);
+                        }
+                    }
+                }
+            }
+
+            // Draw refinement at bottom corners
+            drawRefinedZone(100, 500, 100);
+            drawRefinedZone(800, 500, 100);
+
+            // Highlight corners
+            ctx.beginPath();
+            ctx.arc(100, 500, 20, 0, Math.PI * 2);
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(800, 500, 20, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillText('Stress Concentration', 120, 480);
+        }
+
+        function drawLabels() {
+            // General Overlay Info
+            ctx.fillStyle = 'white';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText(`Physics: ${currentPhysics.toUpperCase()}`, canvas.width - 20, 30);
+            ctx.textAlign = 'left';
+        }
+
+        function animate() {
+            if (animationRunning) {
+                time += 0.05;
+                drawMesh();
+                animationFrame = requestAnimationFrame(animate);
+            }
+        }
+
+        function toggleAnimation() {
+            animationRunning = !animationRunning;
+            document.getElementById('playPauseText').textContent = animationRunning ? '⏸ Pause' : '▶ Play';
+            if (animationRunning) animate();
+        }
+
+        function resetView() {
+            const first = document.querySelector('.physics-option');
+            selectPhysics('conduction', first);
+
+            time = 0;
+            if (!animationRunning) {
+                animationRunning = true;
+                document.getElementById('playPauseText').textContent = '⏸ Pause';
+                animate();
+            }
+        }
+
+        // Start
+        animate();
+
+    </script>
+</body>
+</html>
