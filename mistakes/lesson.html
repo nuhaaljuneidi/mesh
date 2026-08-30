@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7 CFD Meshing Mistakes — Interactive</title>
+<style>
+  :root{
+    --ink:#0b1f33; --ink2:#20465f; --paper:#eef2f4; --card:#ffffff;
+    --bad:#c0392b; --good:#1f8a4c; --accent:#f2b705; --line:#c9d4da;
+    --steel:#2f6f8f; --mono:'SFMono-Regular',Consolas,'Liberation Mono',monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased}
+  header.top{background:linear-gradient(140deg,#08182a 0%,#123c5a 60%,#1c5f83 100%);
+    color:#fff;padding:34px 22px 30px;position:relative;overflow:hidden}
+  header.top .num{font-size:clamp(56px,11vw,120px);font-weight:900;line-height:.85;
+    color:var(--accent);letter-spacing:-3px}
+  header.top h1{margin:.1em 0 .1em;font-size:clamp(22px,4.4vw,42px);font-weight:900;
+    text-transform:uppercase;letter-spacing:1px}
+  header.top p.sub{margin:0;max-width:620px;color:#cfe0ea;font-size:15px}
+  header.top .tag{display:inline-block;margin-top:14px;background:var(--bad);color:#fff;
+    font-weight:700;font-size:13px;padding:6px 12px;border-radius:4px;
+    transform:rotate(-1.5deg)}
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 16px 60px}
+  .intro{background:var(--card);border-left:5px solid var(--steel);padding:14px 18px;
+    border-radius:6px;margin:22px 0;font-size:15px}
+  .grid{display:grid;gap:18px}
+  .card{background:var(--card);border-radius:10px;overflow:hidden;
+    box-shadow:0 1px 3px rgba(11,31,51,.12);border:1px solid var(--line)}
+  .card>.head{display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer;
+    user-select:none}
+  .card>.head .idx{flex:0 0 auto;width:46px;height:46px;border-radius:8px;
+    display:grid;place-items:center;font-weight:900;font-size:22px;color:#fff}
+  .card>.head h2{margin:0;font-size:17px;font-weight:800;text-transform:uppercase;
+    letter-spacing:.3px}
+  .card>.head .desc{margin:2px 0 0;font-size:13px;color:var(--ink2);font-weight:400;
+    text-transform:none;letter-spacing:0}
+  .card>.head .chev{margin-left:auto;flex:0 0 auto;transition:transform .25s;color:var(--ink2)}
+  .card.open>.head .chev{transform:rotate(180deg)}
+  .body{display:none;padding:0 18px 20px;border-top:1px solid var(--line)}
+  .card.open .body{display:block}
+  .demo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+  .panel{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fafcfd}
+  .panel .lbl{font-size:12px;font-weight:800;letter-spacing:.5px;color:#fff;
+    padding:6px 10px;text-transform:uppercase}
+  .panel.bad .lbl{background:var(--bad)}
+  .panel.good .lbl{background:var(--good)}
+  canvas{display:block;width:100%;height:auto;background:#fff}
+  .controls{display:flex;flex-wrap:wrap;gap:14px;align-items:center;
+    background:#f1f6f9;border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+    margin:6px 0 14px}
+  .controls label{font-size:13px;font-weight:600;display:flex;flex-direction:column;gap:4px;
+    flex:1 1 150px}
+  .controls input[type=range]{width:100%;accent-color:var(--steel)}
+  .controls .val{font-family:var(--mono);font-size:12px;color:var(--steel)}
+  .metric{display:inline-flex;align-items:baseline;gap:6px;font-family:var(--mono);
+    font-size:13px;background:#fff;border:1px solid var(--line);border-radius:6px;
+    padding:5px 10px}
+  .metric b{font-size:15px}
+  .metric.ok b{color:var(--good)} .metric.warn b{color:var(--accent)}
+  .metric.err b{color:var(--bad)}
+  .metricrow{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
+  .why{font-size:14px;color:var(--ink)}
+  .why h4{margin:14px 0 4px;font-size:13px;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--steel)}
+  .quiz{background:#fff8e1;border:1px solid #f0d98a;border-radius:8px;padding:12px 14px;
+    margin-top:14px;font-size:14px}
+  .quiz .q{font-weight:700;margin-bottom:8px}
+  .quiz button{display:block;width:100%;text-align:left;margin:5px 0;padding:9px 12px;
+    border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;
+    font-size:13px;transition:.15s}
+  .quiz button:hover{border-color:var(--steel)}
+  .quiz button.right{background:#e4f4ea;border-color:var(--good);font-weight:600}
+  .quiz button.wrong{background:#fbe6e3;border-color:var(--bad)}
+  .quiz .fb{margin-top:8px;font-size:13px;display:none}
+  footer.rem{background:var(--ink);color:#fff;border-radius:10px;padding:22px 24px;
+    margin-top:30px;text-align:center}
+  footer.rem .eq{font-size:15px;font-weight:700;margin-top:6px}
+  footer.rem .eq .g{color:#6ee7a0}.footer.rem .eq .y{color:var(--accent)}
+  .ask{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  .ask div{border-radius:8px;padding:12px 14px;font-size:13px}
+  .ask .no{background:#fbe6e3;border:1px solid #e6a99f}
+  .ask .yes{background:#e4f4ea;border:1px solid #9fd3b0}
+  .ask b{display:block;margin-bottom:4px}
+
+  /* ---- nav + tools hub ---- */
+  .nav{position:sticky;top:0;z-index:20;background:rgba(238,242,244,.94);
+    backdrop-filter:blur(6px);border-bottom:1px solid var(--line);
+    display:flex;gap:6px;padding:8px 16px;overflow-x:auto}
+  .nav button{border:1px solid var(--line);background:#fff;border-radius:20px;
+    padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--ink2)}
+  .nav button.active{background:var(--steel);color:#fff;border-color:var(--steel)}
+  .view{display:none} .view.active{display:block}
+  .hubhead{margin:24px 0 6px;font-size:22px;font-weight:900;color:var(--ink)}
+  .hubsub{margin:0 0 18px;color:var(--ink2);font-size:14px;max-width:640px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .tabs button{border:1px solid var(--line);background:#fff;border-radius:6px;
+    padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink2)}
+  .tabs button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tabpane{display:none} .tabpane.active{display:block}
+
+  /* ---- calculator widget ---- */
+  .calc{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:18px;box-shadow:0 1px 3px rgba(11,31,51,.08)}
+  .calc h3{margin:0 0 2px;font-size:16px;font-weight:800}
+  .calc .note{font-size:12.5px;color:var(--ink2);margin:0 0 14px}
+  .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:12.5px;font-weight:600;color:var(--ink2)}
+  .field input,.field select{padding:8px 9px;border:1px solid var(--line);border-radius:6px;
+    font-size:14px;font-family:var(--mono);background:#fff;color:var(--ink)}
+  .field input:focus,.field select:focus{outline:2px solid var(--steel);outline-offset:-1px}
+  .out{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+  .out .row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;
+    font-size:13.5px;border-bottom:1px dashed #e3e9ec}
+  .out .row:last-child{border-bottom:none}
+  .out .row .k{color:var(--ink2)}
+  .out .row .v{font-family:var(--mono);font-weight:700}
+  .out .hero{background:#eef7f2;border:1px solid #b9dcc7;border-radius:8px;
+    padding:12px 14px;margin-bottom:12px;font-size:14px}
+  .out .hero b{font-family:var(--mono);font-size:19px;color:var(--good);display:block}
+  .badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11.5px;
+    font-weight:700}
+  .badge.ok{background:#e4f4ea;color:#146c3a} .badge.warn{background:#fdf3d6;color:#8a6d10}
+  .badge.err{background:#fbe6e3;color:#a4271b}
+  .unit-toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-left:auto}
+  .unit-toggle button{border:none;background:#fff;padding:5px 12px;font-size:12px;
+    font-weight:600;cursor:pointer;color:var(--ink2)}
+  .unit-toggle button.active{background:var(--steel);color:#fff}
+  .calc .toprow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .qtable{width:100%;border-collapse:collapse;font-size:13px}
+  .qtable th,.qtable td{border:1px solid var(--line);padding:7px 9px;text-align:left}
+  .qtable th{background:#f1f6f9;font-weight:700}
+  .qtable td.c{font-family:var(--mono);text-align:center}
+  .gci-grids{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .inline-calc{margin-top:16px}
+  .inline-calc summary{cursor:pointer;font-weight:700;font-size:13.5px;color:var(--steel);
+    padding:8px 0}
+  /* calc visual */
+  .calc-viz{margin-top:14px;border:1px solid var(--line);border-radius:8px;background:#fafcfd;
+    overflow:hidden}
+  .calc-viz .vlbl{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    color:var(--ink2);padding:6px 10px;background:#f1f6f9;border-bottom:1px solid var(--line)}
+  .calc-viz canvas{display:block;width:100%;height:auto;background:#fff}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  /* QA-added styles */
+  .warn-box{background:#fff4e5;border:1px solid #f0c07a;border-left:4px solid #e08a1b;
+    border-radius:6px;padding:9px 12px;margin:12px 0;font-size:12.5px;color:#7a4e08}
+  .warn-box div{margin:3px 0}
+  .assume{font-size:11.5px;color:#5a6b76;margin:12px 0 0;line-height:1.45;
+    border-top:1px dashed #d7dfe4;padding-top:8px}
+  .badge.neutral{background:#eef2f4;color:#33505f;border:1px solid #cdd8de}
+  .hero .subnote{display:block;font-size:11.5px;color:#4a6472;font-family:-apple-system,sans-serif;
+    font-weight:400;margin-top:4px;line-height:1.4}
+  .hero.heroWarn{background:#fff4e5;border-color:#f0c07a}
+  .hero.heroWarn b{color:#b5710c}
+  .out .row.wt .v,.out .row.check .v{font-family:-apple-system,sans-serif;font-weight:400;
+    font-size:12.5px;text-align:right;max-width:60%}
+  .out .row.check{background:#f1f6f9}
+  .refs{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;
+    margin-top:22px;font-size:13px}
+  .refs h3{margin:0 0 8px;font-size:16px}
+  .refs h4{margin:14px 0 4px;font-size:13px;color:var(--steel);text-transform:uppercase;letter-spacing:.4px}
+  .refs ul{margin:4px 0;padding-left:20px}
+  .refs li{margin:4px 0;line-height:1.45}
+  .vv{background:#eef4f8;border:1px solid #bcd3e0;border-radius:10px;padding:16px 18px;margin:22px 0;font-size:13.5px}
+  .vv h3{margin:0 0 6px;font-size:16px}
+  .vv dt{font-weight:700;margin-top:8px}
+  .vv dd{margin:2px 0 0 0;color:var(--ink2)}
+  @media(max-width:640px){.demo,.ask,.cgrid,.gci-grids,.split{grid-template-columns:1fr}}
+</style>
+<style id="uupm-redesign">
+  :root{
+    --ink:#0f172a;--ink2:#475569;--paper:#f8fafc;--card:#fff;
+    --bad:#b42318;--good:#047857;--accent:#059669;--line:#d8e0e8;
+    --steel:#1e3a5f;--blue:#2563eb;--navy:#071a2f;
+    --mono:'Cascadia Code','SFMono-Regular',Consolas,monospace;
+    --sans:'Bahnschrift','Aptos','Segoe UI',Arial,sans-serif;
+    --shadow:0 14px 40px rgba(15,23,42,.08);
+  }
+  html{scroll-behavior:smooth;scroll-padding-top:76px}
+  body{font-family:var(--sans);font-size:16px;background:
+    linear-gradient(90deg,rgba(30,58,95,.035) 1px,transparent 1px),
+    linear-gradient(rgba(30,58,95,.035) 1px,transparent 1px),var(--paper);
+    background-size:28px 28px;letter-spacing:.002em}
+  button,input,select{font:inherit}
+  button{min-height:44px}
+  :focus-visible{outline:3px solid #1d4ed8!important;outline-offset:3px!important}
+  button,input,select,summary{touch-action:manipulation}
+  button:disabled{cursor:not-allowed;opacity:.72}
+  .skip-link{position:fixed;z-index:100;left:16px;top:12px;padding:10px 14px;
+    background:#fff;color:var(--navy);border:2px solid var(--blue);transform:translateY(-160%)}
+  .skip-link:focus{transform:none}
+  header.top{padding:58px max(22px,calc((100vw - 1180px)/2)) 48px;background:var(--navy);
+    border-bottom:6px solid var(--accent);min-height:360px;display:grid;align-content:end}
+  header.top:after{content:'';position:absolute;width:44vw;height:44vw;right:-12vw;top:-23vw;
+    border:1px solid rgba(96,165,250,.28);border-radius:50%;box-shadow:0 0 0 70px rgba(96,165,250,.04),0 0 0 140px rgba(96,165,250,.025)}
+  .hero-kicker{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:#6ee7b7;margin-bottom:18px;position:relative;z-index:1}
+  .hero-line{display:grid;grid-template-columns:auto 1fr;align-items:end;gap:28px;position:relative;z-index:1;max-width:1020px}
+  header.top .num{font-family:var(--mono);font-size:clamp(92px,15vw,172px);font-weight:600;
+    color:transparent;-webkit-text-stroke:2px #34d399;letter-spacing:-.08em;line-height:.7}
+  header.top h1{max-width:760px;font-size:clamp(34px,5vw,68px);line-height:.95;letter-spacing:-.045em;
+    text-transform:none;font-weight:700;margin:0}
+  header.top p.sub{position:relative;z-index:1;max-width:720px;margin:28px 0 0 132px;font-size:17px;
+    line-height:1.65;color:#cbd5e1}
+  header.top .tag{position:relative;z-index:1;margin:24px 0 0 132px;background:transparent;color:#fff;
+    border-left:3px solid #34d399;padding:5px 0 5px 14px;border-radius:0;transform:none;font-family:var(--mono);font-weight:500}
+  .nav{top:0;min-height:64px;padding:9px max(16px,calc((100vw - 1180px)/2));gap:0;
+    background:rgba(248,250,252,.97);border-bottom:1px solid #cbd5e1;box-shadow:0 4px 18px rgba(15,23,42,.06)}
+  .nav:before{content:'CFD / MESH LAB';align-self:center;margin-right:auto;color:var(--steel);
+    font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.12em}
+  .nav button{border:0;border-bottom:3px solid transparent;background:transparent;border-radius:0;
+    padding:8px 18px;color:var(--ink2);font-size:14px}
+  .nav button:hover{color:var(--ink);background:#eaf0f5}
+  .nav button.active{background:transparent;color:var(--steel);border-color:var(--accent)}
+  .wrap{max-width:1180px;padding:34px 20px 88px}
+  .intro{margin:0 0 28px;padding:20px 24px 20px 76px;border:1px solid #cbd5e1;border-left:0;
+    border-radius:0;background:#fff;box-shadow:var(--shadow);font-size:15px;position:relative}
+  .intro:before{content:'START';position:absolute;left:0;top:0;bottom:0;width:52px;background:var(--steel);
+    color:#fff;writing-mode:vertical-rl;transform:rotate(180deg);display:grid;place-items:center;
+    font:600 11px var(--mono);letter-spacing:.14em}
+  .grid{gap:12px;counter-reset:lesson}
+  .card{border:1px solid #cbd5e1;border-radius:0;box-shadow:none;transition:border-color .2s,box-shadow .2s;background:rgba(255,255,255,.98)}
+  .card:hover{border-color:#94a3b8}
+  .card.open{border-color:var(--steel);box-shadow:var(--shadow)}
+  .card>.head{width:100%;text-align:left;border:0;background:#fff;color:var(--ink);display:grid;
+    grid-template-columns:62px 1fr 32px;align-items:center;gap:18px;padding:18px 22px;cursor:pointer}
+  .card>.head:hover{background:#f1f5f9}
+  .card.open>.head{background:var(--steel);color:#fff}
+  .card>.head .idx{width:48px;height:48px;border:1px solid currentColor!important;border-radius:0!important;
+    background:transparent!important;color:var(--steel);font:600 18px var(--mono)}
+  .card.open>.head .idx{color:#6ee7b7}
+  .card>.head .title{display:block;font-size:18px;line-height:1.2;letter-spacing:-.01em;text-transform:none;font-weight:800}
+  .card>.head .desc{font-size:14px;line-height:1.45;color:var(--ink2)}
+  .card>.head .desc{display:block;margin-top:4px}
+  .card.open>.head .desc{color:#cbd5e1}
+  .card>.head .chev{font:600 20px var(--mono);color:inherit;text-align:center}
+  .body{padding:6px 24px 28px;border-top:0}
+  .controls{border:0;border-left:4px solid var(--blue);border-radius:0;background:#edf4ff;padding:16px 18px;margin:20px 0 14px}
+  .controls label{font-size:13px;gap:8px}.controls input[type=range]{min-height:28px}
+  .metricrow{gap:6px;margin:0 0 18px}
+  .metric{border-radius:0;border-color:#cbd5e1;padding:7px 10px;background:#fff;font-size:12px}
+  .metric:before{content:'●';font-size:8px}.metric.ok:before{color:var(--good)}.metric.warn:before{color:#a16207}.metric.err:before{color:var(--bad)}
+  .demo{gap:1px;background:#cbd5e1;border:1px solid #cbd5e1;margin:20px 0}
+  .panel{border:0;border-radius:0}.panel .lbl{padding:9px 12px;font:600 11px var(--mono);letter-spacing:.1em}
+  .panel.bad .lbl{background:#7f1d1d}.panel.good .lbl{background:#065f46}
+  .why{font-size:15px;max-width:900px}.why h4{font:600 12px var(--mono);letter-spacing:.12em;color:var(--steel);margin-top:22px}
+  .quiz{margin-top:24px;border:1px solid #d6b755;border-left:5px solid #d6a800;border-radius:0;background:#fffdf2;padding:18px}
+  .quiz .q{font-size:15px;margin-bottom:12px}.quiz button{min-height:44px;border-radius:0;padding:10px 13px}
+  .quiz button:hover:not(:disabled){background:#eff6ff;border-color:var(--blue)}
+  .quiz button.right{background:#dcfce7}.quiz button.wrong{background:#fee2e2}
+  .ask{gap:1px;background:#334155}.ask div{border:0!important;border-radius:0;padding:16px 18px}
+  footer.rem{border-radius:0;margin-top:36px;background:var(--navy);border-top:5px solid var(--accent);text-align:left;padding:28px}
+  footer.rem .eq{font-size:16px;line-height:1.6}
+  .hubhead{font-size:clamp(28px,4vw,44px);letter-spacing:-.04em;margin-top:8px}.hubsub{font-size:15px;line-height:1.65;max-width:820px}
+  .tabs{border-bottom:1px solid #94a3b8;gap:0;flex-wrap:nowrap;overflow-x:auto;margin-bottom:22px}
+  .tabs button{flex:0 0 auto;border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;min-height:48px;padding:10px 15px}
+  .tabs button:hover{background:#eaf0f5}.tabs button.active{background:var(--steel);color:#fff;border-color:var(--accent)}
+  .calc,.refs,.vv{border:1px solid #cbd5e1;border-radius:0;box-shadow:var(--shadow);padding:24px}
+  .calc h3,.refs h3,.vv h3{font-size:20px;letter-spacing:-.02em}.calc .note{font-size:13px;line-height:1.6;max-width:850px}
+  .field{gap:6px}.field label{font-size:13px}.field input,.field select{min-height:44px;border-radius:0;border-color:#94a3b8;background:#fff}
+  .field input:hover,.field select:hover{border-color:var(--steel)}
+  .out .hero{border-radius:0;border-left:5px solid var(--good);padding:16px;background:#ecfdf5}
+  .out .row{padding:8px 4px}.badge{border-radius:2px;padding:3px 8px}.unit-toggle{border-radius:0}.unit-toggle button{min-height:40px}
+  .warn-box{border-radius:0;border-left-width:5px;padding:12px 14px}
+  .calc-viz{border-radius:0}.qtable{display:block;max-width:100%;overflow-x:auto;white-space:normal}.qtable th{background:var(--steel);color:#fff}
+  .inline-calc summary{min-height:44px;display:flex;align-items:center;border-bottom:1px solid #cbd5e1}
+  .refs,.vv{margin-top:18px}.refs h4{font-family:var(--mono)}
+  @media(max-width:760px){
+    header.top{min-height:0;padding:40px 20px 34px}.hero-line{grid-template-columns:1fr;gap:18px}.hero-line .num{font-size:84px}
+    header.top p.sub,header.top .tag{margin-left:0}.nav:before{display:none}.nav{justify-content:center}.nav button{flex:1}
+    .wrap{padding:24px 12px 64px}.card>.head{grid-template-columns:44px 1fr 24px;padding:16px 14px;gap:12px}
+    .card>.head .idx{width:40px;height:40px}.body{padding:4px 14px 22px}.demo,.ask,.cgrid,.gci-grids,.split{grid-template-columns:1fr}
+    .out .row{display:grid;gap:3px}.out .row.wt .v,.out .row.check .v{max-width:none;text-align:left}.calc,.refs,.vv{padding:17px}
+  }
+  @media(max-width:420px){header.top h1{font-size:35px}.intro{padding-left:68px}.tabs button{padding-inline:12px;font-size:12px}}
+  @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+  @media print{.nav,.controls,.quiz,.inline-calc{display:none!important}body{background:#fff}.card{break-inside:avoid}.card .body{display:block!important}}
+</style>
+<style id="darkhorse-inspired-theme">
+  :root{
+    color-scheme:dark;
+    --ink:#f5f3ec;--ink2:#c8c9c7;--paper:#18222c;--card:#151719;
+    --bad:#ef7b72;--good:#70c8a0;--accent:#c8b24f;--line:#39434c;
+    --steel:#263847;--blue:#7598bb;--navy:#11171d;
+    --mono:'Cascadia Mono','SFMono-Regular',Consolas,monospace;
+    --sans:'Montserrat','Avenir Next','Century Gothic','Segoe UI',sans-serif;
+    --shadow:0 22px 60px rgba(0,0,0,.28);
+  }
+  body{background:#18222c;color:var(--ink);font-family:var(--sans);background-image:
+    radial-gradient(circle at 1px 1px,rgba(200,178,79,.11) 1px,transparent 1.4px),
+    linear-gradient(140deg,rgba(58,87,111,.18),transparent 42%);background-size:24px 24px,100% 100%}
+  :focus-visible{outline-color:#e4cf70!important}
+  .skip-link{background:#111;color:#fff;border-color:var(--accent)}
+  header.top{min-height:660px;padding-top:90px;padding-bottom:86px;background:
+    linear-gradient(90deg,rgba(17,23,29,.98) 0%,rgba(28,43,55,.93) 58%,rgba(24,34,44,.84) 100%),
+    radial-gradient(circle at 78% 34%,rgba(113,154,190,.35),transparent 32%);border-bottom:1px solid rgba(200,178,79,.5)}
+  header.top:before{content:'';position:absolute;inset:0;opacity:.38;background-image:
+    linear-gradient(31deg,transparent 49.6%,rgba(113,154,190,.35) 49.8%,rgba(113,154,190,.35) 50%,transparent 50.2%),
+    radial-gradient(circle,rgba(113,154,190,.8) 0 4px,transparent 5px);background-size:210px 130px,210px 130px;background-position:55% 20%,55% 20%}
+  header.top:after{display:none}
+  .hero-kicker{color:#fff;font-size:14px;font-weight:700;letter-spacing:.17em;margin-bottom:72px}
+  .hero-kicker:after{content:'VISUAL LEARNING';display:block;color:#c7c9c9;font:400 8px var(--sans);letter-spacing:.25em;margin-top:4px}
+  .hero-line{display:block;max-width:720px}.hero-line .num{position:absolute;left:min(72vw,900px);top:150px;
+    font-size:220px;color:rgba(200,178,79,.08);-webkit-text-stroke:1px rgba(200,178,79,.2);font-weight:700}
+  header.top h1{font-weight:400;font-size:clamp(43px,6vw,76px);line-height:1.13;letter-spacing:-.035em;max-width:750px}
+  header.top h1 em{color:var(--accent);font-style:normal}
+  header.top p.sub{margin:28px 0 0;max-width:680px;color:#e5e7e7;font-size:19px;line-height:1.55}
+  header.top .tag{margin:36px 0 0;border:0;padding:0;color:var(--accent);font-size:12px;letter-spacing:.13em;text-transform:uppercase}
+  header.top .tag:before,header.top .tag:after{content:'—';margin:0 16px;color:#82762f}
+  .nav{background:rgba(16,20,24,.97);border-color:#31383e;box-shadow:0 8px 22px rgba(0,0,0,.2)}
+  .nav:before{color:#fff}.nav button{color:#c6c6c1}.nav button:hover{color:#fff;background:#22282e}
+  .nav button.active{color:#e5d06e;border-color:var(--accent)}
+  .wrap{max-width:1120px}
+  .intro{background:#151719;color:#d7d8d5;border-color:#343b40;box-shadow:var(--shadow)}
+  .intro:before{background:#242b31;color:#d9c568}
+  .card{background:#151719;border-color:#30383e;box-shadow:0 10px 30px rgba(0,0,0,.14);border-radius:8px}
+  .card:hover{border-color:#6f6532;transform:translateY(-1px)}
+  .card.open{border-color:#6f6532;box-shadow:var(--shadow)}
+  .card>.head{background:#151719;color:#f5f3ec;border-radius:8px;padding:22px 24px}
+  .card>.head:hover{background:#1b1f22}.card.open>.head{background:#151719;color:#fff;border-bottom:1px solid #3b403e;border-radius:8px 8px 0 0}
+  .card>.head .idx{color:var(--accent);border-color:#75692f!important}.card.open>.head .idx{color:#e4cf70}
+  .card>.head .title{font-weight:600;letter-spacing:.01em}.card>.head .desc,.card.open>.head .desc{color:#aaaead}
+  .body{background:#151719;border-radius:0 0 8px 8px}
+  .controls{background:#20282f;border-color:#c8b24f}.controls label{color:#e5e7e7}.controls .val{color:#e2cc68}
+  input[type=range]{accent-color:#c8b24f}
+  .metric{background:#20252a;border-color:#3d464d;color:#e8e8e4;border-radius:3px}
+  .demo{background:#38424a;border-color:#38424a;border-radius:6px;overflow:hidden}.panel{background:#101214}.panel .lbl{background:#22292e!important}
+  .panel.bad .lbl{color:#ffaaa3}.panel.good .lbl{color:#8fe0b8}
+  .why{color:#dedfdb}.why h4{color:#d7c25f}
+  .quiz{background:#1d2020;border-color:#766a30;color:#f4f1e7;border-radius:6px}.quiz button{background:#252a2e;color:#f2f2ed;border-color:#46515a;border-radius:4px}
+  .quiz button:hover:not(:disabled){background:#303940;border-color:#c8b24f}.quiz button.right{background:#18392b;color:#c8f5dd}.quiz button.wrong{background:#472422;color:#ffd0cb}
+  footer.rem{background:#101214;border-color:#c8b24f;border-radius:8px}.ask{background:#3b3c38}.ask .no{background:#351f1e}.ask .yes{background:#183329}
+  .hubhead{color:#fff;font-weight:500}.hubsub{color:#c6c9c9}
+  .tabs{border-color:#4b5050}.tabs button{color:#bbbdb9}.tabs button:hover{background:#242a2e;color:#fff}.tabs button.active{background:#c8b24f;color:#121416;border-color:#c8b24f}
+  .calc,.refs,.vv{background:#151719;color:#ecece7;border-color:#343c42;border-radius:8px;box-shadow:var(--shadow)}
+  .calc .note,.refs .note,.assume,.vv dd{color:#b8bcbb}.field label{color:#c8cbc9}
+  .field input,.field select{background:#20262b;color:#f5f5f0;border-color:#505b63;border-radius:4px}
+  .field input:hover,.field select:hover{border-color:#c8b24f}.field input:focus,.field select:focus{outline-color:#e4cf70}
+  .out{border-color:#3d454a}.out .row{border-color:#343b40}.out .row .k{color:#b9bdba}.out .row .v{color:#f4f0df}
+  .out .hero{background:#22271f;border-color:#c8b24f;color:#f5f3ec;border-radius:5px}.out .hero b{color:#dfca67}
+  .hero .subnote{color:#bdc0bc}.badge.neutral{background:#2a3034;color:#d3d5d2;border-color:#4b5358}.badge.warn{background:#473d18;color:#f4de79}.badge.ok{background:#173b2b;color:#a6e6c3}.badge.err{background:#4b2421;color:#ffc0ba}
+  .warn-box{background:#322c18;border-color:#8f7e34;color:#f0d978}.calc-viz{border-color:#3a4248;background:#101214}.calc-viz .vlbl{background:#20262a;color:#c9c9c4;border-color:#3a4248}
+  .qtable th{background:#242b30;color:#e1cc6a}.qtable td{border-color:#3f484f}.refs h4{color:#d6c15d}.vv{background:#1b2228}
+  .unit-toggle{border-color:#525a60}.unit-toggle button{background:#20262b;color:#ccc}.unit-toggle button.active{background:#c8b24f;color:#131516}
+  .inline-calc summary{color:#ddc965;border-color:#41484d}
+  @media(max-width:760px){header.top{min-height:560px;padding-top:52px}.hero-kicker{margin-bottom:48px}.hero-line .num{right:12px;left:auto;top:120px;font-size:128px}header.top h1{font-size:43px}}
+</style>
+<style id="single-lesson-layout">
+  body.single-lesson .nav{display:none}
+  body.single-lesson header.top{min-height:470px;padding-top:64px;padding-bottom:64px}
+  body.single-lesson .hero-kicker{margin-bottom:48px}
+  body.single-lesson .hero-line .num{font-size:170px;top:105px}
+  body.single-lesson .intro{margin-bottom:18px}
+  body.single-lesson .card.lesson-hidden{display:none}
+  .lesson-nav{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;margin:0 0 22px}
+  .lesson-nav a{min-height:48px;display:flex;align-items:center;padding:10px 14px;border:1px solid #4c555b;
+    border-radius:4px;color:#e6d26f;text-decoration:none;background:#151719;font-size:13px}
+  .lesson-nav a:hover{border-color:#c8b24f;background:#22282d}
+  .lesson-nav .next{justify-content:flex-end;text-align:right}.lesson-nav .all{justify-content:center;color:#f1f1ec}
+  .lesson-position{text-align:center;color:#c1c3c0;font:500 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;margin:0 0 16px}
+  @media(max-width:640px){.lesson-nav{grid-template-columns:1fr 1fr}.lesson-nav .all{grid-column:1/-1;grid-row:2}.lesson-nav a{font-size:12px}}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<header class="top">
+  <div class="hero-kicker">CFD Mesh Lab</div>
+  <div class="hero-line"><div class="num" aria-hidden="true">07</div><h1>Getting the <em>mesh right</em> is half the solution.</h1></div>
+  <p class="sub">Seven common meshing mistakes—made visible. Explore each failure mode, drive the simulations, and use the engineering calculators to size with intent.</p>
+  <span class="tag">Explore the field guide</span>
+</header>
+
+<nav class="nav" id="nav" aria-label="Primary" role="tablist">
+  <button data-view="mistakes" class="active" role="tab" aria-selected="true" aria-controls="view-mistakes">Learn</button>
+  <button data-view="tools" role="tab" aria-selected="false" aria-controls="view-tools" tabindex="-1">Calculate</button>
+</nav>
+
+<main class="wrap" id="main-content" tabindex="-1">
+ <section class="view active" id="view-mistakes" role="tabpanel">
+  <div class="intro">Each mistake below has a live before/after you can drive. Watch the quality
+  metrics update as you push the mesh toward a bad configuration. Several cards have a
+  <b>built-in calculator</b> — or open the <b>Calculators</b> tab for all of them in one place.</div>
+  <div class="grid" id="grid"></div>
+
+  <footer class="rem">
+    <div style="font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#8fb8ce">Remember</div>
+    <div class="eq">Credible CFD = correct geometry + appropriate mesh + appropriate physics + correct BCs/ICs + suitable numerics + iterative &amp; conservation checks + solution verification + validation + uncertainty reporting</div>
+    <div class="ask">
+      <div class="no"><b>✕ Don't simply ask</b>"How many cells does my mesh have?"</div>
+      <div class="yes"><b>✓ Ask</b>"Is my mesh capable of capturing the physics I'm trying to simulate?"</div>
+    </div>
+  </footer>
+ </section>
+
+ <section class="view" id="view-tools" role="tabpanel">
+  <div class="hubhead">Meshing calculators</div>
+  <p class="hubsub">First-cell height (external &amp; pipe), inflation layers, grid-convergence (GCI)
+  and quality rules of thumb. Every result is a <b>correlation-based estimate for initial mesh sizing</b>
+  and <b>requires confirmation after solving</b>. Values depend on the solver, wall treatment and flow.</p>
+   <div class="tabs" id="tabs" role="tablist" aria-label="Calculator selection">
+     <button data-tab="yplus" class="active" role="tab" aria-selected="true" aria-controls="tab-yplus">y⁺ · flat plate</button>
+     <button data-tab="pipe" role="tab" aria-selected="false" aria-controls="tab-pipe" tabindex="-1">y⁺ · pipe flow</button>
+     <button data-tab="infl" role="tab" aria-selected="false" aria-controls="tab-infl" tabindex="-1">Inflation stack</button>
+     <button data-tab="gci" role="tab" aria-selected="false" aria-controls="tab-gci" tabindex="-1">GCI verification</button>
+     <button data-tab="qual" role="tab" aria-selected="false" aria-controls="tab-qual" tabindex="-1">Quality limits</button>
+  </div>
+  <div class="tabpane active" id="tab-yplus"></div>
+  <div class="tabpane" id="tab-pipe"></div>
+  <div class="tabpane" id="tab-infl"></div>
+  <div class="tabpane" id="tab-gci"></div>
+  <div class="tabpane" id="tab-qual"></div>
+
+  <div class="vv">
+    <h3>Verification vs. validation — what these tools do and don't do</h3>
+    <dl>
+      <dt>Code verification</dt><dd>Confirming the governing equations are implemented correctly (method of manufactured solutions, order-of-accuracy tests). Not addressed by these calculators.</dd>
+      <dt>Solution verification</dt><dd>Estimating numerical error in a given solution — iterative error and discretization error. <b>The GCI calculator is solution verification.</b> It estimates sensitivity and uncertainty associated with spatial discretization under the assumptions of the method; it does not prove the answer is physically correct.</dd>
+      <dt>Validation</dt><dd>Comparing simulation results against suitable experimental, analytical or benchmark evidence for the intended application. None of these calculators perform validation.</dd>
+    </dl>
+    <p class="assume" style="border:none;padding-top:6px">Credible CFD requires all of: correct geometry; an appropriate mesh; appropriate physical models; correct boundary and initial conditions; suitable numerical methods; iterative and conservation checks; solution verification; validation against trustworthy evidence; and uncertainty reporting. A converged grid-independence plot alone does not establish any of the others. Iterative error should be small compared with the estimated discretization error before a GCI result is meaningful.</p>
+  </div>
+
+  <div class="refs">
+    <h3>Scientific basis, assumptions & references</h3>
+    <p class="note">Each equation below is stated with its coefficient definitions, required SI units, assumptions and validity range in the relevant calculator. Users should confirm every correlation against the documentation for their own solver and mesher.</p>
+    <h4>Grid convergence (solution verification)</h4>
+    <ul><li>Celik, I. B., Ghia, U., Roache, P. J., Freitas, C. J., Coleman, H., Raad, P. E. (2008). “Procedure for Estimation and Reporting of Uncertainty Due to Discretization in CFD Applications.” <i>Journal of Fluids Engineering</i>, 130(7). The three-grid apparent-order, Richardson-extrapolation and GCI procedure implemented here follows this paper (safety factor F<sub>s</sub>=1.25).</li>
+      <li>Roache, P. J. (1994). “Perspective: A Method for Uniform Reporting of Grid Refinement Studies.” <i>Journal of Fluids Engineering</i>, 116(3).</li></ul>
+    <h4>External flat-plate skin friction (local)</h4>
+    <ul><li>Laminar (Blasius): C<sub>f,x</sub> = 0.664·Re<sub>x</sub><sup>−1/2</sup>. Turbulent (Prandtl–Schlichting 1/5-power): C<sub>f,x</sub> ≈ 0.0592·Re<sub>x</sub><sup>−1/5</sup>. Schlichting &amp; Gersten, <i>Boundary-Layer Theory</i>; White, <i>Viscous Fluid Flow</i>. Average forms (1.328·Re<sub>L</sub><sup>−1/2</sup>; 0.074·Re<sub>L</sub><sup>−1/5</sup>) are offered as a separate, consistent mode.</li>
+      <li>Flat-plate transition Reynolds number is not universal (commonly cited ~1.5×10⁵–10⁷ depending on freestream turbulence, roughness, pressure gradient, heat transfer).</li></ul>
+    <h4>Internal pipe friction</h4>
+    <ul><li>Laminar Darcy: f<sub>D</sub> = 64/Re<sub>D</sub>. Turbulent smooth (Blasius): f<sub>D</sub> = 0.3164·Re<sub>D</sub><sup>−1/4</sup>, valid ~4×10³ ≤ Re<sub>D</sub> ≲ 10⁵. Darcy vs. Fanning: f<sub>D</sub> = 4·f<sub>F</sub>; wall shear τ<sub>w</sub> = f<sub>D</sub>·ρU²/8 = ½·f<sub>F</sub>·ρU². Transitional band ~2300–4000 carries large uncertainty. See Moody (1944); White, <i>Fluid Mechanics</i>; Munson et al., <i>Fundamentals of Fluid Mechanics</i>.</li></ul>
+    <h4>y⁺ and wall treatment</h4>
+    <ul><li>y⁺ = ρ·u<sub>τ</sub>·y/μ, u<sub>τ</sub> = √(τ<sub>w</sub>/ρ). Wall-resolved (y⁺≈1) and wall-function (~30–300) ranges are model- and solver-dependent; consult your turbulence-model and solver documentation (e.g. ANSYS Fluent / CFX Theory &amp; User Guides, OpenFOAM turbulence-model docs) rather than treating any single range as universal.</li></ul>
+    <h4>Mesh-quality metrics</h4>
+    <ul><li>Skewness, orthogonal quality and aspect-ratio definitions and thresholds are tool-specific. Values shown are educational rules of thumb; confirm against the official documentation for the solver and mesher in use (e.g. ANSYS Meshing / Fluent quality metric definitions).</li></ul>
+    <p class="assume" style="border:none">This page is an educational aid. It has not been certified for a specific engineering application. Confirm all correlations, thresholds and results against authoritative documentation and your own solved solutions.</p>
+  </div>
+ </section>
+</main>
+
+<script>
+const C = {steel:'#2f6f8f',bad:'#c0392b',good:'#1f8a4c',ink:'#0b1f33',accent:'#f2b705',
+  line:'#b9c6cd', wall:'#123c5a'};
+
+// palette for the index badges (matches infographic vibe)
+const IDXCOL=['#1c5f83','#127f83','#2f8f4c','#e07b1b','#7c3aed','#0e6ba8','#374151'];
+
+// ---- helpers ----
+function fit(canvas){const dpr=devicePixelRatio||1;const w=canvas.clientWidth||360;
+  const h=canvas.height/canvas.width*w||w*0.7; canvas.width=w*dpr; canvas.height=h*dpr;
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.__w=w;ctx.__h=h;return ctx;}
+function line(ctx,a,b,col,lw){ctx.strokeStyle=col||C.line;ctx.lineWidth=lw||1;
+  ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+function poly(ctx,pts,stroke,fill,lw){ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
+  ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw||1;ctx.stroke();}}
+
+// ===================== CALCULATOR VISUALS =====================
+// small helper: fresh sized ctx for a calc canvas
+function cctx(canvas,aspect){const dpr=devicePixelRatio||1;const w=canvas.clientWidth||360;
+  const h=w*aspect;canvas.width=w*dpr;canvas.height=h*dpr;const x=canvas.getContext('2d');
+  x.scale(dpr,dpr);x.__w=w;x.__h=h;x.clearRect(0,0,w,h);return x;}
+
+// y+ visual: near-wall cell drawn to scale against the boundary-layer velocity profile
+function vizYplus(canvas,r){
+  const x=cctx(canvas,0.62),w=x.__w,h=x.__h;
+  const wallY=h-22, top=14, left=44, right=w-14;
+  // axis: wall at bottom
+  x.fillStyle=C.wall;x.fillRect(left,wallY,right-left,6);
+  x.fillStyle='#123c5a';x.font='11px sans-serif';x.fillText('WALL',left,h-6);
+  x.save();x.translate(12,(top+wallY)/2);x.rotate(-Math.PI/2);
+  x.fillStyle='#20465f';x.textAlign='center';x.fillText('distance from wall',0,0);x.restore();
+  x.textAlign='left';
+  // velocity profile u+ = f(y+) log-law-ish, mapped to box
+  x.strokeStyle=C.steel;x.lineWidth=2;x.beginPath();
+  for(let py=wallY;py>top;py-=2){const frac=(wallY-py)/(wallY-top);
+    const u=Math.pow(frac,0.35);const px=left+u*(right-left-10);
+    py===wallY?x.moveTo(px,py):x.lineTo(px,py);}
+  x.stroke();
+  x.fillStyle=C.steel;x.font='10px sans-serif';x.fillText('u(y)',right-30,top+10);
+  // the first cell: height proportional to y+ within the profile (viscous sublayer ~ y+<5)
+  // map y+ to a visible band: sublayer (y+ up to ~5) fills lower ~30% of box
+  const yp=r.yplusShown;
+  const cellFrac=Math.min(0.9, Math.log10(Math.max(1,yp)+1)/Math.log10(300)); // 0..~1 over y+ 0..300
+  const cellTop=wallY-6-Math.max(6,cellFrac*(wallY-top-6));
+  // sublayer / log-law shading
+  const subTop=wallY-6-0.16*(wallY-top-6);   // ~ y+<5 region marker
+  x.fillStyle='rgba(31,138,76,.08)';x.fillRect(left,subTop,right-left,wallY-6-subTop);
+  x.fillStyle='#146c3a';x.font='9px sans-serif';x.fillText('viscous sublayer (y⁺<5)',left+4,subTop-3);
+  // first cell rectangle
+  const cellCol = yp<=5?'#1f8a4c': yp<=30?'#e0a01b': yp<=300?'#2f6f8f':'#c0392b';
+  x.fillStyle=cellCol+'22';x.strokeStyle=cellCol;x.lineWidth=1.5;
+  x.fillRect(left,cellTop,(right-left)*0.5,wallY-6-cellTop);
+  x.strokeRect(left,cellTop,(right-left)*0.5,wallY-6-cellTop);
+  // label the first cell
+  x.fillStyle=cellCol;x.font='bold 11px sans-serif';
+  x.fillText('1st cell  y⁺='+ (yp<10?yp.toFixed(2):yp.toFixed(0)), left+(right-left)*0.5+8, (cellTop+wallY)/2);
+  // buffer-zone warning band 5<y+<30
+  if(yp>5&&yp<30){x.fillStyle=C.bad;x.font='10px sans-serif';
+    x.fillText('⚠ in buffer layer', left+(right-left)*0.5+8, (cellTop+wallY)/2+14);}
+}
+
+// inflation visual: draw the prism stack to scale, then the core cell
+function vizInflation(canvas,st,core){
+  const x=cctx(canvas,0.62),w=x.__w,h=x.__h;
+  const wallX=40, top=16, bot=h-16, maxH=bot-top;
+  // total to display = prism stack + one core cell on top
+  const disp=st.total+core;
+  const sc=maxH/disp;
+  x.fillStyle=C.wall;x.fillRect(10,top,wallX-10,bot-top);
+  x.save();x.translate(24,(top+bot)/2);x.rotate(-Math.PI/2);
+  x.fillStyle='#fff';x.font='bold 10px sans-serif';x.textAlign='center';x.fillText('WALL',0,4);x.restore();
+  x.textAlign='left';
+  let yy=bot;
+  // prism layers (green, growing)
+  st.heights.forEach((hh,i)=>{
+    const ph=hh*sc; const yTop=yy-ph;
+    x.fillStyle=i%2? 'rgba(31,138,76,.18)':'rgba(31,138,76,.30)';
+    x.fillRect(wallX,yTop,w-wallX-90,ph);
+    x.strokeStyle=C.good;x.lineWidth=.8;x.strokeRect(wallX,yTop,w-wallX-90,ph);
+    yy=yTop;
+  });
+  // core cell on top
+  const ch=core*sc;const cTop=yy-ch;
+  x.fillStyle='rgba(47,111,143,.15)';x.fillRect(wallX,Math.max(top,cTop),w-wallX-90,Math.min(ch,yy-top));
+  x.strokeStyle=C.steel;x.lineWidth=1;x.strokeRect(wallX,Math.max(top,cTop),w-wallX-90,Math.min(ch,yy-top));
+  // labels
+  const lx=w-84;
+  x.fillStyle=C.good;x.font='11px sans-serif';x.fillText(st.heights.length+' prism layers',lx,bot-4);
+  x.fillStyle=C.steel;x.fillText('core cell',lx,Math.max(top+10,cTop+ch/2));
+  x.fillStyle='#20465f';x.font='10px sans-serif';
+  x.fillText('growth →',lx,(top+bot)/2);
+  // blend indicator arrow between last prism and core
+  const blend=st.last/core;
+  x.fillStyle= (blend>=0.5&&blend<=1.5)?C.good:(blend<0.5?C.accent:C.bad);
+  x.font='bold 10px sans-serif';x.fillText((blend<0.5?'gap ':'jump ')+blend.toFixed(2)+'×',lx,cTop+ch+12);
+}
+
+// GCI visual: convergence plot of phi vs 1/N with extrapolated asymptote
+function vizGCI(canvas,pts,phiExt,gci21){
+  const x=cctx(canvas,0.62),w=x.__w,h=x.__h;
+  const L=44,R=w-14,T=16,B=h-30;
+  // pts: [{h, phi}] with h = representative size (bigger = coarser). x-axis = h (0 at right)
+  const hs=pts.map(p=>p.h), phis=pts.map(p=>p.phi).concat([phiExt]);
+  const hmax=Math.max(...hs), phMin=Math.min(...phis),phMax=Math.max(...phis);
+  const pad=(phMax-phMin)*0.2||1;
+  const X=hv=>R-(hv/hmax)*(R-L-6);            // h=0 at right (grid-independent limit)
+  const Y=pv=>B-((pv-(phMin-pad))/((phMax+pad)-(phMin-pad)))*(B-T);
+  // axes
+  x.strokeStyle=C.line;line(x,[L,T],[L,B],C.line,1);line(x,[L,B],[R,B],C.line,1);
+  x.fillStyle='#20465f';x.font='10px sans-serif';
+  x.fillText('coarser  →  cell size h  →  finer (h→0)',L+2,h-6);
+  x.save();x.translate(12,(T+B)/2);x.rotate(-Math.PI/2);x.textAlign='center';
+  x.fillText('solved φ',0,0);x.restore();x.textAlign='left';
+  // extrapolated asymptote line (dashed at h=0)
+  x.strokeStyle=C.good;x.setLineDash([4,3]);x.lineWidth=1;
+  line(x,[L,Y(phiExt)],[R,Y(phiExt)],C.good,1);x.setLineDash([]);
+  x.fillStyle=C.good;x.fillText('φ_ext = '+phiExt.toPrecision(5),L+4,Y(phiExt)-4);
+  // data curve
+  const sorted=[...pts].sort((a,b)=>b.h-a.h); // coarse->fine
+  x.strokeStyle=C.steel;x.lineWidth=2;x.beginPath();
+  sorted.forEach((p,i)=>{const px=X(p.h),py=Y(p.phi);i?x.lineTo(px,py):x.moveTo(px,py);});
+  // extend to extrapolated point at h=0
+  x.lineTo(X(0),Y(phiExt));x.stroke();
+  // points
+  sorted.forEach((p,i)=>{x.fillStyle=C.steel;x.beginPath();x.arc(X(p.h),Y(p.phi),4,0,7);x.fill();
+    x.fillStyle='#20465f';x.font='9px sans-serif';x.fillText('φ'+'₁₂₃'[pts.indexOf(p)],X(p.h)-4,Y(p.phi)-7);});
+  // extrapolated marker
+  x.fillStyle=C.good;x.beginPath();x.arc(X(0),Y(phiExt),4.5,0,7);x.fill();
+  // GCI band around finest point
+  const fine=sorted[sorted.length-1];
+  const band=Math.abs(fine.phi)*gci21;
+  x.fillStyle='rgba(31,138,76,.12)';
+  x.fillRect(X(fine.h)-6,Y(fine.phi+band),12,Y(fine.phi-band)-Y(fine.phi+band));
+}
+
+
+const FLUIDS={
+  air20:{name:'Air (20°C)',rho:1.204,mu:1.825e-5},
+  air25:{name:'Air (25°C)',rho:1.184,mu:1.849e-5},
+  water20:{name:'Water (20°C)',rho:998.2,mu:1.002e-3},
+  water60:{name:'Water (60°C)',rho:983.2,mu:4.67e-4},
+  co2:{name:'CO₂ (25°C)',rho:1.808,mu:1.49e-5},
+  custom:{name:'Custom (ρ, μ)',rho:1.204,mu:1.825e-5}
+};
+const isNum=x=>typeof x==='number'&&Number.isFinite(x);
+const reynolds=(rho,U,L,mu)=>rho*U*L/mu;
+// External flat plate LOCAL coefficients (consistent within a regime; never mixed)
+function cfLocalFlatPlate(Re,regime){
+  if(regime==='laminar')  return 0.664/Math.sqrt(Re);      // Blasius local
+  if(regime==='turbulent')return 0.0592/Math.pow(Re,0.2);  // Prandtl–Schlichting 1/5-power local
+  return NaN;
+}
+// External flat plate AVERAGE over 0..L (separate mode; consistent set)
+function cfAvgFlatPlate(Re,regime){
+  if(regime==='laminar')  return 1.328/Math.sqrt(Re);
+  if(regime==='turbulent')return 0.074/Math.pow(Re,0.2);
+  return NaN;
+}
+function yFromYplus({rho,mu,U,yplus,Cf}){
+  const tau=0.5*Cf*rho*U*U,uTau=Math.sqrt(tau/rho),y=yplus*mu/(rho*uTau);
+  return{tau,uTau,y};
+}
+function yplusFromY({rho,mu,U,y,Cf}){
+  const tau=0.5*Cf*rho*U*U,uTau=Math.sqrt(tau/rho);
+  return{tau,uTau,yplus:rho*uTau*y/mu};
+}
+// Internal pipe flow: Darcy friction factor, explicit conventions
+function pipeRegime(Re){if(Re<2300)return'laminar';if(Re<=4000)return'transitional';return'turbulent';}
+function darcyFriction(Re,regime){
+  if(regime==='laminar')  return 64/Re;
+  if(regime==='turbulent')return 0.3164/Math.pow(Re,0.25); // Blasius smooth, Re≲1e5
+  return NaN; // transitional
+}
+const pipeWallShear=({rho,U,fD})=>fD*rho*U*U/8; // τw = f_D ρU²/8 ; Fanning f_F = f_D/4
+function inflationStack({first,growth,n}){
+  const heights=[];let hgt=first;for(let i=0;i<n;i++){heights.push(hgt);hgt*=growth;}
+  const closed=growth===1?n*first:first*(Math.pow(growth,n)-1)/(growth-1);
+  return{heights,total:heights.reduce((a,b)=>a+b,0),closed,last:heights[heights.length-1]};
+}
+function gci({phi1,phi2,phi3,r21,r32}){
+  if(![phi1,phi2,phi3,r21,r32].every(isNum))return{ok:false,err:'Non-finite input.'};
+  if(r21<=1||r32<=1)return{ok:false,err:'Refinement ratios must be > 1 (fine→coarse).'};
+  if(Math.abs(r21-1)<1e-6||Math.abs(r32-1)<1e-6)return{ok:false,err:'A refinement ratio is too close to 1 to be reliable.'};
+  const eps21=phi2-phi1,eps32=phi3-phi2;
+  const epsTol=1e-12*Math.max(1,Math.abs(phi1),Math.abs(phi2),Math.abs(phi3));
+  if(Math.abs(eps21)<=epsTol&&Math.abs(eps32)<=epsTol)
+    return{ok:false,err:'All three reported solutions are identical within numerical precision. Apparent order and GCI are indeterminate, not zero. Report more digits and confirm that iterative convergence and output precision are adequate.'};
+  if(Math.abs(eps21)<=epsTol||Math.abs(eps32)<=epsTol)
+    return{ok:false,err:'One successive solution difference is zero or too small to resolve. Apparent order and GCI are indeterminate; report more digits or use better-resolved grid results.'};
+  const R=eps21/eps32;
+  if(!isNum(R))return{ok:false,err:'One pair of solutions is identical, so the convergence ratio is undefined.'};
+  const s=Math.sign(eps32/eps21)||1;
+  let p=Math.abs(Math.log(Math.abs(eps32/eps21))/Math.log(r21));
+  for(let it=0;it<500;it++){
+    const arg=(Math.pow(r21,p)-s)/(Math.pow(r32,p)-s);
+    if(!(arg>0)){p=NaN;break;}
+    const pn=(1/Math.log(r21))*Math.abs(Math.log(Math.abs(eps32/eps21))+Math.log(arg));
+    if(!isNum(pn)){p=NaN;break;}
+    if(Math.abs(pn-p)<1e-9){p=pn;break;}p=pn;
+  }
+  if(!isNum(p)||p<=1e-8)return{ok:false,err:'The order-of-convergence calculation is undefined or effectively zero — the data do not support a finite Richardson/GCI estimate.',R,oscillatory:R<0};
+  const phiExt=(Math.pow(r21,p)*phi1-phi2)/(Math.pow(r21,p)-1);
+  const ea=phi1!==0?Math.abs((phi1-phi2)/phi1):NaN;
+  const eext=phiExt!==0?Math.abs((phiExt-phi1)/phiExt):NaN;
+  const Fs=1.25;
+  const gci21=isNum(ea)?Fs*ea/(Math.pow(r21,p)-1):NaN;
+  const ea32=phi2!==0?Math.abs((phi2-phi3)/phi2):NaN;
+  const gci32=isNum(ea32)?Fs*ea32/(Math.pow(r32,p)-1):NaN;
+  if(![phiExt,ea,eext,gci21,gci32].every(isNum))return{ok:false,err:'The relative-error or GCI calculation is undefined. The fine-grid and extrapolated quantities must be nonzero for relative reporting.'};
+  const comparableRatios=Math.abs(r21-r32)/Math.max(r21,r32)<=0.05;
+  const asymp=(comparableRatios&&gci21!==0)?gci32/(Math.pow(r21,p)*gci21):NaN;
+  return{ok:true,p,phiExt,ea,eext,gci21,gci32,R,asymp,monotonic:R>0&&R<1,oscillatory:R<0,
+    pWarn:(p<0.5||p>3),comparableRatios};
+}
+
+// ---- unit handling (SI internal; display SI or Imperial) ----
+let UNIT='SI';
+const M_TO_IN=39.3701, M_TO_FT=3.28084, MS_TO_FTS=3.28084;
+function fmtLen(m){
+  if(!isNum(m))return '—';
+  if(UNIT==='SI'){const mm=m*1000;return mm<0.1?(m*1e6).toPrecision(3)+' µm':mm.toPrecision(3)+' mm';}
+  const inch=m*M_TO_IN;return inch<0.01?(inch*1000).toPrecision(3)+' mil':inch.toPrecision(3)+' in';
+}
+function fmtSpeed(v){return !isNum(v)?'—':(UNIT==='SI'?v.toPrecision(3)+' m/s':(v*MS_TO_FTS).toPrecision(3)+' ft/s');}
+function sci(x,d=3){return isNum(x)?x.toExponential(d):'—';}
+
+// ---- shared: applicability warning box ----
+function warnBox(msgs){
+  if(!msgs||!msgs.length)return '';
+  return `<div class="warn-box">${msgs.map(m=>'<div>⚠ '+m+'</div>').join('')}</div>`;
+}
+function infoLine(t){return `<p class="assume">${t}</p>`;}
+
+// ============ y+ / first-cell calculator (external flat plate) ============
+function buildYplus(host){
+  host.innerHTML=`
+   <div class="calc">
+     <div class="toprow"><h3>y⁺ → first-cell height (external flat plate)</h3>
+       <span class="unit-toggle"><button data-u="SI" class="active">SI</button><button data-u="IMP">Imperial</button></span>
+     </div>
+     <p class="note">Correlation-based initial estimate for mesh sizing. <b>y</b> is the wall-to-first-cell-<b>centroid</b>
+     distance from y⁺ = ρ·u<sub>τ</sub>·y/μ, with u<sub>τ</sub>=√(τ<sub>w</sub>/ρ) and τ<sub>w</sub>=½·C<sub>f</sub>·ρU².
+     Confirm y⁺ from the solved wall-shear field afterward and revise the mesh if needed.</p>
+     <div class="cgrid">
+       <div class="field"><label>Fluid</label><select id="yp-fluid"></select></div>
+       <div class="field"><label>Regime (you choose the physical model)</label><select id="yp-regime">
+         <option value="turbulent">Turbulent (local Cf,x = 0.0592·Re_x⁻¹ᐟ⁵)</option>
+         <option value="laminar">Laminar (local Cf,x = 0.664·Re_x⁻⁰·⁵)</option></select></div>
+       <div class="field"><label>Coefficient basis</label><select id="yp-basis">
+         <option value="local">Local at x (recommended)</option>
+         <option value="avg">Average over 0→L</option></select></div>
+       <div class="field" id="yp-rhoF" style="display:none"><label>ρ (kg/m³)</label><input id="yp-rho" type="number" value="1.204"></div>
+       <div class="field" id="yp-muF" style="display:none"><label>μ (Pa·s)</label><input id="yp-mu" type="number" value="1.825e-5"></div>
+       <div class="field"><label>Velocity U (<span class="uu-v">m/s</span>)</label><input id="yp-U" type="number" value="10"></div>
+       <div class="field"><label>Streamwise x (local) / length L (avg) (<span class="uu-l">m</span>)</label><input id="yp-L" type="number" value="1"></div>
+       <div class="field"><label>Target y⁺</label><input id="yp-yp" type="number" value="1" step="0.1"></div>
+     </div>
+     <div id="yp-warn"></div>
+     <div class="out" id="yp-out"></div>
+     <div class="calc-viz"><div class="vlbl">First cell vs. boundary-layer profile (schematic, not to absolute scale)</div>
+       <canvas id="yp-viz"></canvas></div>
+     ${infoLine('Assumes: smooth wall, Newtonian fluid, incompressible / low-Mach, zero–mild pressure gradient, attached flat-plate-like boundary layer, representative external velocity. Curvature, separation, strong pressure gradients, roughness, transition, freestream turbulence, heat transfer, rotation, compressibility and 3-D effects can make this estimate inaccurate.')}
+   </div>`;
+  const f=host.querySelector('#yp-fluid');
+  Object.entries(FLUIDS).forEach(([k,v])=>f.append(new Option(v.name,k)));
+  const el=id=>host.querySelector(id);
+  const readLen=v=>UNIT==='SI'?v:v/M_TO_FT, readVel=v=>UNIT==='SI'?v:v/MS_TO_FTS;
+  function calc(){
+    const key=f.value,custom=key==='custom';
+    el('#yp-rhoF').style.display=custom?'':'none';el('#yp-muF').style.display=custom?'':'none';
+    const rho=custom?+el('#yp-rho').value:FLUIDS[key].rho;
+    const mu=custom?+el('#yp-mu').value:FLUIDS[key].mu;
+    const U=readVel(+el('#yp-U').value),L=readLen(+el('#yp-L').value),yplus=+el('#yp-yp').value;
+    const regime=el('#yp-regime').value,basis=el('#yp-basis').value;
+    const warns=[];
+    if(!(isNum(rho)&&rho>0&&isNum(mu)&&mu>0&&isNum(U)&&U>0&&isNum(L)&&L>0&&isNum(yplus)&&yplus>0)){
+      el('#yp-warn').innerHTML=warnBox(['Enter positive, finite values for all fields.']);
+      el('#yp-out').innerHTML='';return;
+    }
+    const Re=reynolds(rho,U,L,mu);
+    const Cf=basis==='local'?cfLocalFlatPlate(Re,regime):cfAvgFlatPlate(Re,regime);
+    // regime applicability (advisory only — user's model is respected)
+    if(regime==='laminar'&&Re>5e5) warns.push('Re here is above ~5×10⁵; a laminar correlation may not apply — transition on a flat plate is not fixed and depends on turbulence, roughness and pressure gradient. This is a rough indication only; your selected model was NOT overridden.');
+    if(regime==='turbulent'&&Re<1e5) warns.push('Re here is below ~1×10⁵; the turbulent correlation is being used outside its usual range and may be inaccurate. Rough indication only; your model was not changed.');
+    if(regime==='turbulent'&&Re>1e7) warns.push('Re exceeds ~10⁷; the 1/5-power local correlation loses accuracy at very high Re — consider a higher-Re correlation.');
+    const r=yFromYplus({rho,mu,U,yplus,Cf});
+    const invalid = warns.length>0;
+    el('#yp-warn').innerHTML=warnBox(warns);
+    // y+ regime note (wall treatment) — model dependent, not a pass/fail
+    let ypNote,ypClass;
+    if(yplus<=1){ypNote='y⁺ ≈ 1: typical wall-resolved target (model-dependent; some models need y⁺&lt;1).';ypClass='ok';}
+    else if(yplus<5){ypNote='y⁺ &lt; 5: near viscous sublayer; only appropriate for wall-resolved treatment, and adequacy is model-dependent.';ypClass='ok';}
+    else if(yplus<30){ypNote='5 &lt; y⁺ &lt; 30: buffer layer — generally undesirable for traditional wall functions. Some enhanced / all-y⁺ treatments handle it differently.';ypClass='warn';}
+    else if(yplus<=300){ypNote='30 ≤ y⁺ ≤ 300: common traditional wall-function range (not universal; depends on model, formulation, roughness, gradients).';ypClass='ok';}
+    else {ypNote='y⁺ &gt; 300: outside the common wall-function range for many solvers — check your wall treatment.';ypClass='warn';}
+    const badge = invalid ? '<span class="badge warn">used outside stated range — review</span>'
+                          : '<span class="badge neutral">correlation estimate — confirm after solving</span>';
+    el('#yp-out').innerHTML=`
+      <div class="hero ${invalid?'heroWarn':''}">First-cell centroid distance y (estimate)
+        <b>${fmtLen(r.y)}</b>
+        <span class="subnote">Full first-cell thickness ≈ 2y ${fmtLen(2*r.y)} — only when the cell is ~orthogonal and its centroid is near mid-height; not a universal identity.</span>
+        <div style="margin-top:6px">${badge}</div></div>
+      <div class="row"><span class="k">Reynolds number (${basis==='local'?'Re_x':'Re_L'})</span><span class="v">${sci(Re)}</span></div>
+      <div class="row"><span class="k">C_f (${basis}, ${regime})</span><span class="v">${isNum(Cf)?Cf.toPrecision(4):'—'}</span></div>
+      <div class="row"><span class="k">Wall shear τ_w</span><span class="v">${isNum(r.tau)?r.tau.toPrecision(4)+' Pa':'—'}</span></div>
+      <div class="row"><span class="k">Friction velocity u_τ</span><span class="v">${fmtSpeed(r.uTau)}</span></div>
+      <div class="row wt ${ypClass}"><span class="k">Wall-treatment note</span><span class="v">${ypNote}</span></div>`;
+    vizYplus(el('#yp-viz'),{yplusShown:yplus});
+  }
+  host.querySelectorAll('.unit-toggle button').forEach(b=>b.onclick=()=>{
+    const newU=b.dataset.u; if(newU===UNIT)return;
+    const Uf=el('#yp-U'),Lf=el('#yp-L');
+    if(newU==='IMP'){Uf.value=(+Uf.value*MS_TO_FTS).toPrecision(4);Lf.value=(+Lf.value*M_TO_FT).toPrecision(4);}
+    else{Uf.value=(+Uf.value/MS_TO_FTS).toPrecision(4);Lf.value=(+Lf.value/M_TO_FT).toPrecision(4);}
+    UNIT=newU;host.querySelectorAll('.unit-toggle button').forEach(x=>x.classList.toggle('active',x===b));
+    host.querySelectorAll('.uu-v').forEach(e=>e.textContent=UNIT==='SI'?'m/s':'ft/s');
+    host.querySelectorAll('.uu-l').forEach(e=>e.textContent=UNIT==='SI'?'m':'ft');
+    calc();
+  });
+  host.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calc));
+  calc();
+}
+
+// ============ Internal pipe-flow y+ / friction calculator ============
+function buildPipe(host){
+  host.innerHTML=`
+   <div class="calc">
+     <h3>Pipe flow: friction factor, wall shear & y⁺</h3>
+     <p class="note">Circular smooth straight pipe. Re_D = ρUD/μ. <b>Darcy</b> f_D and <b>Fanning</b> f_F = f_D/4
+     are reported explicitly. Wall shear uses τ_w = f_D·ρU²/8 (equivalently ½·f_F·ρU²).</p>
+     <div class="cgrid">
+       <div class="field"><label>Fluid</label><select id="pp-fluid"></select></div>
+       <div class="field" id="pp-rhoF" style="display:none"><label>ρ (kg/m³)</label><input id="pp-rho" type="number" value="998.2"></div>
+       <div class="field" id="pp-muF" style="display:none"><label>μ (Pa·s)</label><input id="pp-mu" type="number" value="1.002e-3"></div>
+       <div class="field"><label>Bulk velocity U (m/s)</label><input id="pp-U" type="number" value="2"></div>
+       <div class="field"><label>Diameter D (mm)</label><input id="pp-D" type="number" value="50"></div>
+       <div class="field"><label>Target y⁺</label><input id="pp-yp" type="number" value="1" step="0.1"></div>
+     </div>
+     <div id="pp-warn"></div>
+     <div class="out" id="pp-out"></div>
+     ${infoLine('Assumes: smooth, circular, straight pipe, Newtonian fluid, fully-developed flow. Blasius turbulent correlation is for smooth pipes and Re_D ≲ 1×10⁵. Roughness, non-circular ducts, entrances, bends, swirl, compressibility, non-Newtonian fluids, heat transfer and developing flow need different treatment.')}
+   </div>`;
+  const f=host.querySelector('#pp-fluid');
+  Object.entries(FLUIDS).forEach(([k,v])=>f.append(new Option(v.name,k)));
+  f.value='water20';
+  const el=id=>host.querySelector(id);
+  function calc(){
+    const key=f.value,custom=key==='custom';
+    el('#pp-rhoF').style.display=custom?'':'none';el('#pp-muF').style.display=custom?'':'none';
+    const rho=custom?+el('#pp-rho').value:FLUIDS[key].rho;
+    const mu=custom?+el('#pp-mu').value:FLUIDS[key].mu;
+    const U=+el('#pp-U').value,D=+el('#pp-D').value/1000,yplus=+el('#pp-yp').value;
+    if(!(isNum(rho)&&rho>0&&isNum(mu)&&mu>0&&isNum(U)&&U>0&&isNum(D)&&D>0&&isNum(yplus)&&yplus>0)){
+      el('#pp-warn').innerHTML=warnBox(['Enter positive, finite values for all fields.']);el('#pp-out').innerHTML='';return;}
+    const Re=reynolds(rho,U,D,mu);
+    const regime=pipeRegime(Re);
+    const warns=[];
+    if(regime==='transitional'){
+      warns.push('Re_D is in the transitional band (~2300–4000). Simple laminar or turbulent correlations are unreliable here; the friction factor carries large uncertainty. No confidence badge is shown.');
+    }
+    if(regime==='turbulent'&&Re>1e5) warns.push('Re_D exceeds ~1×10⁵; Blasius loses accuracy. Consider Colebrook–White / Haaland with roughness.');
+    let fD=darcyFriction(Re,regime), fF=isNum(fD)?fD/4:NaN;
+    let tau=isNum(fD)?pipeWallShear({rho,U,fD}):NaN;
+    let uTau=isNum(tau)?Math.sqrt(tau/rho):NaN;
+    let y=isNum(uTau)?yplus*mu/(rho*uTau):NaN;
+    el('#pp-warn').innerHTML=warnBox(warns);
+    const regBadge = regime==='laminar'?'<span class="badge neutral">laminar (Re_D&lt;2300)</span>'
+      : regime==='transitional'?'<span class="badge warn">transitional — correlation not defined</span>'
+      : '<span class="badge neutral">turbulent (Re_D&gt;4000)</span>';
+    const heroInner = regime==='transitional'
+      ? `<b>—</b><span class="subnote">First-cell height is not estimated in the transitional band. Bound the case with laminar and turbulent limits, or use a validated correlation.</span>`
+      : `<b>${fmtLen(y)}</b><span class="subnote">Wall-to-centroid distance for target y⁺=${yplus}. Confirm from the solved field.</span>`;
+    el('#pp-out').innerHTML=`
+      <div class="hero ${regime==='transitional'?'heroWarn':''}">First-cell centroid distance y (estimate) ${regBadge}
+        ${heroInner}</div>
+      <div class="row"><span class="k">Reynolds number Re_D</span><span class="v">${sci(Re)}</span></div>
+      <div class="row"><span class="k">Regime</span><span class="v">${regime} (laminar &lt;2300 · transitional 2300–4000 · turbulent &gt;4000, approx.)</span></div>
+      <div class="row"><span class="k">Darcy friction factor f_D</span><span class="v">${isNum(fD)?fD.toPrecision(4):'not defined'}</span></div>
+      <div class="row"><span class="k">Fanning friction factor f_F = f_D/4</span><span class="v">${isNum(fF)?fF.toPrecision(4):'not defined'}</span></div>
+      <div class="row"><span class="k">Wall shear τ_w = f_D·ρU²/8</span><span class="v">${isNum(tau)?tau.toPrecision(4)+' Pa':'not defined'}</span></div>
+      <div class="row"><span class="k">Friction velocity u_τ</span><span class="v">${fmtSpeed(uTau)}</span></div>`;
+  }
+  host.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calc));
+  calc();
+}
+
+// ============ Inflation-layer builder ============
+function buildInflation(host){
+  host.innerHTML=`
+   <div class="calc">
+     <h3>Inflation-layer stack</h3>
+     <p class="note">Geometric growth: Δyᵢ = Δy₁·gⁱ⁻¹, total T = Δy₁(gⁿ−1)/(g−1) for g≠1, or n·Δy₁ for g=1.
+     A resolved boundary layer needs more than a size match — see the checklist below.</p>
+     <div class="cgrid">
+       <div class="field"><label>First-cell height Δy₁ (mm)</label><input id="if-first" type="number" value="0.02" step="0.001"></div>
+       <div class="field"><label>Growth ratio g</label><input id="if-g" type="number" value="1.2" step="0.05"></div>
+       <div class="field"><label>Number of layers n</label><input id="if-n" type="number" value="15" step="1"></div>
+       <div class="field"><label>Target core cell size (mm)</label><input id="if-core" type="number" value="2" step="0.1"></div>
+       <div class="field"><label>Target boundary-layer thickness δ (mm, optional)</label><input id="if-bl" type="number" value="" step="0.1" placeholder="e.g. 5"></div>
+     </div>
+     <div id="if-warn"></div>
+     <div class="out" id="if-out"></div>
+     <div class="calc-viz"><div class="vlbl">Prism stack (to scale)</div><canvas id="if-viz"></canvas></div>
+     ${infoLine('A growth ratio around 1.1–1.2 is a commonly used conservative starting range. The appropriate value depends on geometry, solver, cell quality and the gradients being resolved. Matching the last prism to the core-cell size does NOT prove the boundary layer is resolved.')}
+   </div>`;
+  const el=id=>host.querySelector(id);
+  function calc(){
+    const first=+el('#if-first').value/1000, g=+el('#if-g').value, nRaw=+el('#if-n').value,
+          core=+el('#if-core').value/1000, blRaw=el('#if-bl').value, bl=blRaw===''?NaN:+blRaw/1000;
+    const errors=[],warns=[];
+    if(el('#if-first').value.trim()===''||!(isNum(first)&&first>0)) errors.push('First-cell height must be a positive number.');
+    if(el('#if-g').value.trim()===''||!isNum(g)) errors.push('Growth ratio must be a finite number.');
+    else if(g<1) errors.push('Growth ratio must be at least 1; shrinking layers are not supported by this inflation-stack estimator.');
+    else if(g>1.4) warns.push('Growth ratio above ~1.4 is aggressive and can hurt cell quality and accuracy.');
+    if(el('#if-n').value.trim()===''||!(isNum(nRaw))||nRaw<=0) errors.push('Number of layers must be a positive integer.');
+    else if(!Number.isInteger(nRaw)) warns.push('Number of layers should be a whole number; it was rounded for the estimate.');
+    if(el('#if-core').value.trim()===''||!(isNum(core)&&core>0)) errors.push('Target core-cell size must be a positive number.');
+    if(blRaw!==''&&!(isNum(bl)&&bl>0)) errors.push('Optional target boundary-layer thickness must be positive when supplied.');
+    const n=Math.max(0,Math.round(nRaw||0));
+    if(errors.length||n<1){
+      el('#if-warn').innerHTML=warnBox([...errors,...warns]);el('#if-out').innerHTML='';return;}
+    const s=inflationStack({first,growth:g,n});
+    const blend=s.last/core;
+    if(isNum(bl)&&s.total<bl) warns.push('Total prism thickness ('+fmtLen(s.total)+') is less than the target boundary-layer thickness ('+fmtLen(bl)+') — the stack may not cover the layer you intend to resolve.');
+    if(blend>2) warns.push('The last prism is much larger than the core cell (jump of '+blend.toFixed(2)+'×) — expect an abrupt size transition into the core mesh.');
+    if(blend<0.4) warns.push('The last prism is much smaller than the core cell ('+blend.toFixed(2)+'×) — many core cells will be needed to transition, or add layers / raise growth.');
+    el('#if-warn').innerHTML=warnBox(warns);
+    const gNote = g<=1.2?'<span class="badge neutral">within common 1.1–1.2 starting range</span>'
+      : g<=1.4?'<span class="badge warn">above conservative range</span>'
+      : '<span class="badge warn">aggressive</span>';
+    const cover = isNum(bl)? '<div class="row"><span class="k">Coverage of target δ</span><span class="v">'+(s.total/bl*100).toFixed(0)+'% of '+fmtLen(bl)+'</span></div>' : '';
+    el('#if-out').innerHTML=`
+      <div class="hero">Total prism thickness <b>${fmtLen(s.total)}</b>
+        <span class="subnote">${n} layers, first ${fmtLen(first)} → last ${fmtLen(s.last)}. Loop and closed-form agree to ${Math.abs(s.total-s.closed)<1e-15?'machine precision':'within rounding'}.</span></div>
+      <div class="row"><span class="k">Growth ratio</span><span class="v">${g.toFixed(2)} ${gNote}</span></div>
+      <div class="row"><span class="k">Last prism ÷ core size</span><span class="v">${blend.toFixed(2)}×</span></div>
+      ${cover}
+      <div class="row check"><span class="k">A resolved layer also needs</span><span class="v">correct Δy₁ for the wall treatment · enough layers for the gradients · total thickness covering the boundary layer · smooth transition to core · acceptable cell quality · alignment with the flow.</span></div>`;
+    vizInflation(el('#if-viz'),s,core);
+  }
+  host.querySelectorAll('input').forEach(e=>e.addEventListener('input',calc));
+  calc();
+}
+
+// ============ GCI calculator ============
+function buildGCI(host){
+  host.innerHTML=`
+   <div class="calc">
+     <h3>Grid convergence index (solution verification)</h3>
+     <p class="note">Three-grid Richardson procedure of Celik et al. (2008). Grid 1 = fine, 2 = medium, 3 = coarse,
+     with h₁&lt;h₂&lt;h₃. This estimates <b>discretization uncertainty</b> — it is solution verification, not validation.</p>
+     <div class="field" style="margin-bottom:10px"><label>Input mode</label>
+       <select id="g-mode"><option value="cells">Cell counts (h estimated as N⁻¹ᐟᵈ)</option>
+       <option value="h">Representative cell size h</option></select></div>
+     <div class="gci-grids">
+       <div><div class="field"><label>φ₁ (fine)</label><input id="g-p1" type="number" value="6.063"></div>
+            <div class="field"><label id="g-l1">Cells N₁</label><input id="g-n1" type="number" value="18000"></div></div>
+       <div><div class="field"><label>φ₂ (medium)</label><input id="g-p2" type="number" value="5.972"></div>
+            <div class="field"><label id="g-l2">Cells N₂</label><input id="g-n2" type="number" value="8000"></div></div>
+       <div><div class="field"><label>φ₃ (coarse)</label><input id="g-p3" type="number" value="5.863"></div>
+            <div class="field"><label id="g-l3">Cells N₃</label><input id="g-n3" type="number" value="4500"></div></div>
+     </div>
+     <div class="cgrid" style="margin-top:10px">
+       <div class="field"><label>Domain dimension d (for N⁻¹ᐟᵈ)</label>
+         <select id="g-dim"><option value="2" selected>2D</option><option value="3">3D</option></select></div>
+       <div class="field"><label>Project acceptance criterion (%, optional, user-defined)</label>
+         <input id="g-acc" type="number" value="" step="0.5" placeholder="e.g. 3"></div>
+     </div>
+     <div id="g-warn"></div>
+     <div class="out" id="g-out"></div>
+     <div class="calc-viz"><div class="vlbl">Solved quantity vs. cell size (toward h→0)</div><canvas id="g-viz"></canvas></div>
+     ${infoLine('Cell-count → h proxy assumes: unchanged physical domain, geometrically similar grids, systematic refinement applied throughout the relevant domain. Total cell counts do NOT define a valid ratio for arbitrary local refinement, adaptive refinement, topology changes or unrelated meshes. GCI also assumes adequate iterative convergence and consistent schemes/models on every grid.')}
+   </div>`;
+  const el=id=>host.querySelector(id);
+  function calc(){
+    const mode=el('#g-mode').value,dim=+el('#g-dim').value;
+    const required=['#g-p1','#g-p2','#g-p3','#g-n1','#g-n2','#g-n3'];
+    if(required.some(id=>el(id).value.trim()==='')){
+      el('#g-warn').innerHTML=warnBox(['All three solution values and all three grid values are required.']);el('#g-out').innerHTML='';return;}
+    const p1=+el('#g-p1').value,p2=+el('#g-p2').value,p3=+el('#g-p3').value;
+    const n1=+el('#g-n1').value,n2=+el('#g-n2').value,n3=+el('#g-n3').value;
+    const acc=el('#g-acc').value===''?NaN:+el('#g-acc').value;
+    ['1','2','3'].forEach(i=>el('#g-l'+i).textContent=mode==='cells'?'Cells N'+'₁₂₃'[+i-1]:'h'+'₁₂₃'[+i-1]);
+    const warns=[];
+    if(![p1,p2,p3,n1,n2,n3].every(isNum)){el('#g-warn').innerHTML=warnBox(['Enter finite numbers for all φ and grid values.']);el('#g-out').innerHTML='';return;}
+    if(el('#g-acc').value!==''&&!(isNum(acc)&&acc>0)){el('#g-warn').innerHTML=warnBox(['The optional project acceptance criterion must be a positive, finite percentage.']);el('#g-out').innerHTML='';return;}
+    let r21,r32;
+    if(mode==='cells'){
+      if(!(n1>0&&n2>0&&n3>0)){el('#g-warn').innerHTML=warnBox(['Cell counts must be positive.']);el('#g-out').innerHTML='';return;}
+      if(!(n1>n2&&n2>n3)){el('#g-warn').innerHTML=warnBox(['Cell counts must decrease fine→coarse (N₁ > N₂ > N₃).']);el('#g-out').innerHTML='';return;}
+      r21=Math.pow(n1/n2,1/dim);r32=Math.pow(n2/n3,1/dim);
+      warns.push('Refinement ratios were estimated from cell counts as h ∝ N⁻¹ᐟ'+dim+'. Valid only for systematic, geometrically-similar refinement of an unchanged domain.');
+    } else {
+      if(!(n1>0&&n2>0&&n3>0)){el('#g-warn').innerHTML=warnBox(['Representative sizes h must be positive.']);el('#g-out').innerHTML='';return;}
+      if(!(n1<n2&&n2<n3)){el('#g-warn').innerHTML=warnBox(['Representative sizes must increase fine→coarse (h₁ < h₂ < h₃).']);el('#g-out').innerHTML='';return;}
+      r21=n2/n1;r32=n3/n2;
+    }
+    const g=gci({phi1:p1,phi2:p2,phi3:p3,r21,r32});
+    if(!g.ok){el('#g-warn').innerHTML=warnBox([g.err]);el('#g-out').innerHTML='';return;}
+    if(g.trivial){
+      el('#g-warn').innerHTML=warnBox([g.note]);
+      el('#g-out').innerHTML=`<div class="row"><span class="k">Refinement ratios r₂₁ / r₃₂</span><span class="v">${r21.toFixed(3)} / ${r32.toFixed(3)}</span></div>
+        <div class="row"><span class="k">Fine-grid GCI₂₁</span><span class="v">≈ 0% (solutions essentially identical)</span></div>`;
+      return;
+    }
+    if(g.oscillatory) warns.push('Convergence is oscillatory (sign change in successive differences). The reported order and GCI should be treated with caution.');
+    if(g.pWarn) warns.push('Observed order p = '+g.p.toFixed(2)+' is outside the usual ~0.5–3 range; the solutions may not be in the asymptotic range.');
+    if(!g.comparableRatios) warns.push('The two refinement ratios differ by more than 5%. The common simplified asymptotic-range indicator is therefore not reported; interpret the unequal-ratio GCI result with particular care.');
+    if(isNum(g.asymp)&&Math.abs(g.asymp-1)>0.1) warns.push('Asymptotic-range indicator GCI₃₂/(r₂₁ᵖ·GCI₂₁) = '+g.asymp.toFixed(2)+' (≈1 expected). Solutions may not yet be in the asymptotic range.');
+    el('#g-warn').innerHTML=warnBox(warns);
+    const convBadge = g.monotonic?'<span class="badge neutral">monotonic</span>'
+      : g.oscillatory?'<span class="badge warn">oscillatory</span>':'<span class="badge warn">non-monotonic</span>';
+    let accRow='';
+    if(isNum(acc)){
+      const passes=g.gci21*100<=acc;
+      accRow=`<div class="row"><span class="k">Vs. your acceptance criterion (${acc}%, user-defined)</span>
+        <span class="v">${passes?'≤ criterion':'&gt; criterion'} <span class="badge ${passes?'neutral':'warn'}">${passes?'meets your criterion':'exceeds your criterion'}</span></span></div>`;
+    }
+    el('#g-out').innerHTML=`
+      <div class="hero">Estimated fine-grid discretization uncertainty (GCI₂₁)
+        <b>${(g.gci21*100).toFixed(2)}%</b>
+        <span class="subnote">Compare with the project-specific acceptance criterion for this quantity of interest. This is not a universal pass/fail threshold.</span></div>
+      <div class="row"><span class="k">Refinement ratios r₂₁ / r₃₂</span><span class="v">${r21.toFixed(3)} / ${r32.toFixed(3)}</span></div>
+      <div class="row"><span class="k">Observed order p</span><span class="v">${g.p.toFixed(3)}</span></div>
+      <div class="row"><span class="k">Extrapolated φ (h→0)</span><span class="v">${g.phiExt.toPrecision(6)}</span></div>
+      <div class="row"><span class="k">Approx. rel. error e₂₁</span><span class="v">${(g.ea*100).toFixed(2)}%</span></div>
+      <div class="row"><span class="k">Extrapolated rel. error</span><span class="v">${(g.eext*100).toFixed(2)}%</span></div>
+      <div class="row"><span class="k">Coarse-grid GCI₃₂</span><span class="v">${isNum(g.gci32)?(g.gci32*100).toFixed(2)+'%':'—'}</span></div>
+      <div class="row"><span class="k">Asymptotic indicator</span><span class="v">${isNum(g.asymp)?g.asymp.toFixed(3)+' (≈1 expected)':'—'}</span></div>
+      <div class="row"><span class="k">Convergence</span><span class="v">${convBadge}</span></div>
+      ${accRow}`;
+    const h1=1,h2=h1*r21,h3=h2*r32;
+    vizGCI(el('#g-viz'),[{h:h1,phi:p1},{h:h2,phi:p2},{h:h3,phi:p3}],g.phiExt,g.gci21);
+  }
+  host.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calc));
+  calc();
+}
+
+// ============ Quality reference ============
+function buildQuality(host){
+  const cellSVG=(skew,col)=>{const d=skew*10;
+    return `<svg width="34" height="30" viewBox="0 0 34 30"><polygon points="${6+d},6 28,${6+d*0.4} ${28-d},24 6,${24-d*0.4}" fill="${col}22" stroke="${col}" stroke-width="1.4"/></svg>`;};
+  host.innerHTML=`
+   <div class="calc">
+     <h3>Mesh-quality reference (rules of thumb)</h3>
+     <p class="note"><b>These are educational rules of thumb, not scientific laws.</b> Metric definitions and
+     acceptable values are solver-, discretization-, cell-type- and flow-dependent. Consult the documentation
+     for the solver and mesher you are actually using. Judge the <b>worst</b> cells and their <b>location</b>,
+     the distribution and the maximum — not only the average.</p>
+     <div style="display:flex;gap:6px;justify-content:space-around;text-align:center;margin:6px 0 14px;flex-wrap:wrap">
+       <div>${cellSVG(0.1,'#1f8a4c')}<div style="font-size:10px;color:#146c3a">low skew</div></div>
+       <div>${cellSVG(0.4,'#5aa02c')}<div style="font-size:10px;color:#4a7a1a">moderate</div></div>
+       <div>${cellSVG(0.65,'#e0a01b')}<div style="font-size:10px;color:#8a6d10">review</div></div>
+       <div>${cellSVG(0.92,'#c0392b')}<div style="font-size:10px;color:#a4271b">strong review trigger</div></div>
+     </div>
+     <table class="qtable">
+       <tr><th>Metric (named definition)</th><th>Generally better</th><th>Rule-of-thumb caution</th><th>Notes</th></tr>
+       <tr><td>Skewness (Fluent-style: 0 best, 1 degenerate)</td><td class="c">lower</td><td class="c">&gt; ~0.8 in critical regions</td>
+         <td>A strong review trigger, not an automatic reject. Definitions differ between tools; solver tolerance ≠ a good design target; impact depends on location and local gradients.</td></tr>
+       <tr><td>Orthogonal quality (0–1, higher better)</td><td class="c">higher</td><td class="c">very low values</td>
+         <td>Low values harm gradient reconstruction, stability and accuracy. Thresholds vary by solver/mesher; the minimum permissible value is not a good design target.</td></tr>
+       <tr><td>Aspect ratio</td><td class="c">context-dependent</td><td class="c">high AR + misalignment/skew</td>
+         <td>High AR is fine and expected when cells are deliberately anisotropic and aligned with the gradient/flow (e.g. inflation layers) and change smoothly. It is concerning when combined with misalignment, skewness, non-orthogonality, abrupt transitions or strong multidirectional gradients. No universal “AR &gt; 40 = bad”.</td></tr>
+       <tr><td>Growth rate</td><td class="c">~1.1–1.2 start</td><td class="c">large jumps</td>
+         <td>Conservative recommendation, not a law. Appropriate value depends on geometry, solver, cell quality and gradients.</td></tr>
+     </table>
+     <h4 style="margin:16px 0 6px;font-size:14px">y⁺ by wall-treatment strategy</h4>
+     <table class="qtable">
+       <tr><th>Wall-treatment strategy</th><th>Typical first-cell target</th><th>Region generally avoided</th><th>Required verification</th><th>Key limitations</th></tr>
+       <tr><td>Wall-resolved (low-Re / integration to wall)</td><td class="c">y⁺ ≈ 1 (some models &lt;1)</td><td class="c">log-law region</td>
+         <td>Check the solved y⁺ distribution; confirm the sublayer is resolved</td><td>Requirement depends on turbulence model &amp; implementation; y⁺&lt;5 is not automatically sufficient</td></tr>
+       <tr><td>Traditional wall functions</td><td class="c">~30–300 (not universal)</td><td class="c">~5–30 buffer layer</td>
+         <td>Confirm centroids sit in the intended range across the wall</td><td>Suitability depends on model, solver, wall-function formulation, roughness, pressure gradient, separation, heat transfer, compressibility</td></tr>
+       <tr><td>Enhanced / all-y⁺ / blended treatments</td><td class="c">solver-defined</td><td class="c">solver-defined</td>
+         <td>Follow the specific solver’s guidance and verify</td><td>May handle the buffer region differently; do not assume every treatment fails there</td></tr>
+     </table>
+     ${infoLine('The ~5 < y⁺ < 30 buffer layer is generally undesirable for traditional wall functions because the first-cell centroid falls between the viscous-sublayer and fully-logarithmic regions. Enhanced or all-y⁺ treatments may handle it differently.')}
+   </div>`;
+}
+
+// ================= MISTAKE DEFINITIONS =================
+const MISTAKES=[
+ {
+  t:"Poor-quality elements",
+  d:"High skewness, poor orthogonality and distortion hurt numerical stability.",
+  why:`<h4>What's happening</h4>High skewness means a cell's shape departs far from ideal
+   (equilateral tri / square quad). The solver interpolates across faces that meet at bad
+   angles, so gradients get smeared and the iteration can diverge.
+   <h4>Fix it</h4>As a rule of thumb (Fluent-style skewness, 0 best / 1 degenerate), treat
+   cells above ~0.8 as a strong review trigger, especially in critical regions — not an
+   automatic reject. Improve orthogonal quality and smooth/re-mesh distorted zones. Exact
+   thresholds and metric definitions are solver- and mesher-dependent; check your docs.`,
+  ctrl:[{k:'skew',lab:'Distortion',min:0,max:100,v:10}],
+  metrics:s=>{const sk=(s.skew/100*0.95).toFixed(2);
+    return [['Max skewness',sk,sk<0.5?'ok':sk<0.85?'warn':'err'],
+            ['Orthogonal Q',(1-s.skew/100*0.9).toFixed(2),s.skew<40?'ok':s.skew<70?'warn':'err']];},
+  draw:(ctx,s,mode)=>{ // mode 'left'=driven, 'right'=ideal
+    const w=ctx.__w,h=ctx.__h,n=6,m=5;const cw=(w-2*m)/n,ch=(h-2*m)/n;
+    const dist=mode==='right'?0:s.skew/100;
+    ctx.strokeStyle=C.steel;ctx.lineWidth=1;
+    function P(i,j){let x=m+i*cw,y=m+j*ch;
+      const j2=(i+j)%2;
+      x+=Math.sin(i*1.3+j)*dist*cw*0.55*j2;
+      y+=Math.cos(i+j*1.7)*dist*ch*0.55*(1-j2);
+      return [x,y];}
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++){
+      const p=[P(i,j),P(i+1,j),P(i+1,j+1),P(i,j+1)];
+      // skewness color
+      const sk=quadSkew(p);
+      const col=sk<0.5?'#eaf4ee':sk<0.85?'#fdf3d6':'#f8dcd7';
+      poly(ctx,p,C.steel,mode==='right'?'#eef7f2':col,1);
+    }},
+  quiz:{q:"Which single metric best flags a distorted cell before you solve?",
+    a:["Cell volume","Skewness / orthogonal quality","Total cell count","Aspect ratio only"],
+    correct:1,fb:"Skewness and orthogonal quality directly measure how far a cell's shape and face angles depart from ideal — the root cause of instability."}
+ },
+ {
+  t:"Insufficient mesh refinement",
+  animated:true,
+  d:"Walls, bends, inlets/outlets and recirculation zones need finer resolution.",
+  why:`<h4>What's happening</h4>Coarse cells can't resolve steep gradients where flow turns
+   or separates. The recirculation bubble behind the bend gets averaged away, so you lose
+   the very physics you were after.
+   <h4>Fix it</h4>Add local refinement (body-of-influence, curvature/proximity sizing) in
+   high-gradient regions instead of refining everywhere.`,
+  ctrl:[{k:'ref',lab:'Refinement in bend',min:1,max:5,v:1}],
+  metrics:s=>[['Resolved cells in bend',[8,18,32,50,72][s.ref-1],s.ref>=4?'ok':s.ref>=2?'warn':'err'],
+              ['Captures recirculation',s.ref>=4?'Yes':s.ref>=2?'Partly':'No',s.ref>=4?'ok':s.ref>=2?'warn':'err']],
+  draw:(ctx,s,mode,t=0)=>{const w=ctx.__w,h=ctx.__h;
+    const lvl=mode==='right'?5:s.ref;
+    const yTop=h*0.28, yBot=h*0.62, xWall=w*0.30, xRight=w*0.62;
+    // draw an L-bend channel walls
+    ctx.strokeStyle=C.wall;ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(6,yTop);ctx.lineTo(xRight,yTop);ctx.lineTo(xRight,h-6);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(6,yBot);ctx.lineTo(xWall,yBot);ctx.lineTo(xWall,h-6);ctx.stroke();
+    // mesh density in bend region grows with lvl
+    const step=Math.max(6,26-lvl*4);
+    for(let x=6;x<xRight;x+=step){line(ctx,[x,yTop],[x,Math.min(h-6, x>xWall?h-6:yBot)],'rgba(47,111,143,.5)',.7);}
+    for(let y=yTop;y<h-6;y+=step){const x0= y<yBot?6:xWall;line(ctx,[x0,y],[xRight,y],'rgba(47,111,143,.5)',.7);}
+    // ---- animated tracer particles following the L path ----
+    // path: horizontal inlet (left->bend) then vertical down the outlet
+    const chMidY=(yTop+yBot)/2, chMidX=(xWall+xRight)/2;
+    const nP=10;
+    for(let k=0;k<nP;k++){
+      let ph=((t*0.28)+k/nP)%1;              // 0..1 along the path
+      let px,py,col='rgba(47,111,143,.9)';
+      if(ph<0.5){ // horizontal leg
+        const a=ph/0.5; px=6+a*(chMidX-6); py=chMidY;
+      } else {     // vertical leg down the outlet
+        const a=(ph-0.5)/0.5; px=chMidX; py=chMidY+a*(h-6-chMidY);
+      }
+      ctx.fillStyle=col;ctx.beginPath();ctx.arc(px,py,2.2,0,7);ctx.fill();
+    }
+    // ---- recirculation vortex: only spins when resolved (lvl>=4) ----
+    const vx=w*0.46, vy=h*0.5, vr=Math.min(w,h)*0.09;
+    if(lvl>=4){
+      ctx.strokeStyle=C.good;ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(vx,vy,vr,0,6.283);ctx.stroke();
+      // rotating tick to show it's a live vortex
+      const spin=t*2.2;
+      for(let a=0;a<6.283;a+=Math.PI/2){
+        const ang=a+spin;
+        const x1=vx+Math.cos(ang)*vr*0.55, y1=vy+Math.sin(ang)*vr*0.55;
+        const x2=vx+Math.cos(ang)*vr, y2=vy+Math.sin(ang)*vr;
+        line(ctx,[x1,y1],[x2,y2],C.good,2);
+        // arrowhead
+        ctx.fillStyle=C.good;ctx.beginPath();ctx.arc(x2,y2,2,0,7);ctx.fill();
+      }
+      ctx.fillStyle=C.good;ctx.font='11px sans-serif';ctx.fillText('vortex resolved',w*0.30,h*0.5-vr-4);
+    } else {
+      ctx.fillStyle='rgba(192,57,43,.85)';ctx.font='11px sans-serif';
+      ctx.fillText('recirculation missed',w*0.30,h*0.5);
+    }
+  },
+  quiz:{q:"Where should refinement be concentrated for wall-bounded turning flow?",
+    a:["Uniformly everywhere","Only at the domain outlet","Bends, walls & recirculation zones","Only the freestream core"],
+    correct:2,fb:"Refine where gradients are steep — near walls, bends, and separation/recirculation — not uniformly."}
+ },
+ {
+  t:"Ignoring boundary layers",
+  animated:true,
+  d:"Failing to resolve the near-wall region distorts velocity and heat-transfer predictions.",
+  why:`<h4>What's happening</h4>Velocity drops from freestream to zero across a thin near-wall
+   layer. Without inflation layers your first cell sits in the wrong y+ range, so wall shear
+   and Nusselt number are guessed by the wall function rather than resolved.
+   <h4>Fix it</h4>Add prism/inflation layers sized for your wall treatment. Wall-resolved
+   models commonly target y⁺ ≈ 1 (some need &lt;1); traditional wall functions commonly use
+   y⁺ ≈ 30–300 — both are model- and solver-dependent, not universal. Confirm y⁺ from the
+   solved field.`,
+  ctrl:[{k:'layers',lab:'Inflation layers',min:0,max:12,v:0}],
+  metrics:s=>{const yp=s.layers===0?420:Math.max(0.8,120/Math.pow(1.5,s.layers)).toFixed(1);
+    const state=s.layers===0?'err':(yp<=5?'ok':yp<=300?'warn':'err');
+    return [['First-cell y+',s.layers===0?'~420 (unresolved)':yp,state],
+            ['Layers',s.layers,s.layers>=6?'ok':s.layers>=3?'warn':'err']];},
+  draw:(ctx,s,mode,t=0)=>{const w=ctx.__w,h=ctx.__h;
+    const L=mode==='right'?8:s.layers;
+    const wallY=h-14, top=6;
+    // wall at bottom
+    ctx.fillStyle=C.wall;ctx.fillRect(6,wallY,w-12,8);
+    ctx.fillStyle='#123c5a';ctx.font='11px sans-serif';ctx.fillText('WALL',10,h-3);
+    // coarse background grid
+    for(let x=6;x<w-6;x+=(w-12)/8)line(ctx,[x,top],[x,wallY],'rgba(47,111,143,.28)',.6);
+    for(let y=top;y<wallY;y+=(wallY-top)/6)line(ctx,[6,y],[w-6,y],'rgba(47,111,143,.28)',.6);
+    // inflation layers growing from wall
+    let y=wallY;let dh=2.2;
+    for(let k=0;k<L;k++){y-=dh;dh*=1.35;if(y<h*0.3)break;
+      line(ctx,[6,y],[w-6,y],'rgba(31,138,76,.9)',1);}
+    // velocity model: near-wall length scale set by whether layers resolve it
+    const bl = L? 0.30 : 0.92;               // fraction of height the profile ramps over
+    const uAt = yy=>{const d=(wallY-yy)/(wallY-top);return Math.pow(Math.min(1,d/bl),0.5);};
+    // ---- animated flow arrows at several heights ----
+    // arrow speed ∝ local velocity; near wall should be ~0 only if resolved
+    const rows=7;
+    for(let r=0;r<rows;r++){
+      const yy=wallY-6-(r+0.5)*(wallY-top-6)/rows;
+      const u=uAt(yy);
+      const speed=6+u*u*140;                  // px/s — quadratic so near-wall is nearly still
+      const seg=10+u*22;                       // faster flow = longer streaks
+      const phase=(t*speed)% (seg*2);
+      // moving dashes across the row = streak animation; near-wall pale, freestream bold
+      ctx.strokeStyle=`rgba(47,111,143,${0.18+0.62*u})`;
+      ctx.lineWidth=1+u*1.4;
+      const lw=1+u*1.4;
+      for(let x=6-(seg*2)+phase; x<w-6; x+=seg*2){
+        const xEnd=Math.min(w-10,x+seg);
+        if(xEnd>8){line(ctx,[Math.max(8,x),yy],[xEnd,yy],ctx.strokeStyle,lw);
+          // arrowhead only on faster streaks
+          if(xEnd<w-10 && u>0.25){ctx.beginPath();ctx.moveTo(xEnd,yy);ctx.lineTo(xEnd-4,yy-2.5);ctx.lineTo(xEnd-4,yy+2.5);ctx.closePath();
+            ctx.fillStyle=ctx.strokeStyle;ctx.fill();}}
+      }
+    }
+    // velocity profile overlay (static reference curve)
+    ctx.strokeStyle=C.bad;ctx.lineWidth=2;ctx.beginPath();
+    for(let yy=wallY;yy>top;yy-=2){const u=uAt(yy);const px=(w*0.15)+u*(w*0.5);
+      if(yy===wallY)ctx.moveTo(px,yy);else ctx.lineTo(px,yy);}
+    ctx.stroke();
+    ctx.fillStyle=C.bad;ctx.font='10px sans-serif';ctx.fillText('u(y)',w*0.7,14);
+    // note near-wall behaviour
+    ctx.font='10px sans-serif';
+    if(L){ctx.fillStyle=C.good;ctx.fillText('gradient resolved',10,20);}
+    else {ctx.fillStyle=C.bad;ctx.fillText('flow slips past wall',10,20);}
+  },
+  quiz:{q:"For a wall-resolved (low-Re) turbulence model, first-cell y+ should be about:",
+    a:["≈ 1","≈ 100","≈ 500","It doesn't matter"],
+    correct:0,fb:"Wall-resolved models commonly target y⁺ ≈ 1 (some below 1) so the viscous sublayer is captured; traditional wall functions commonly use ≈30–300. Exact values are model- and solver-dependent."}
+ },
+ {
+  t:"Sudden mesh-size transitions",
+  d:"Abrupt jumps in element size add numerical error and reduce quality.",
+  why:`<h4>What's happening</h4>When a large cell borders a tiny one, interpolation across
+   that face is inaccurate and the local truncation error spikes.
+   <h4>Fix it</h4>Keep size changes gradual — a growth ratio around 1.1–1.2 is a common
+   conservative starting point (the appropriate value depends on geometry, solver, cell
+   quality and the gradients). Use size functions / buffer layers so cell size changes
+   smoothly.`,
+  ctrl:[{k:'grow',lab:'Growth rate',min:110,max:260,v:110}],
+  metrics:s=>{const g=(s.grow/100).toFixed(2);
+    return [['Growth rate',g,g<=1.2?'ok':g<=1.5?'warn':'err'],
+            ['Face size jump',g<=1.2?'smooth':g<=1.5?'moderate':'abrupt',g<=1.2?'ok':g<=1.5?'warn':'err']];},
+  draw:(ctx,s,mode)=>{const w=ctx.__w,h=ctx.__h;
+    const g=mode==='right'?1.12:s.grow/100;
+    ctx.strokeStyle=C.steel;ctx.lineWidth=.8;
+    let x=6;let cw=6;
+    // vertical lines with growth
+    const xs=[6];while(x<w-6){x+=cw;xs.push(x);cw*=g;}
+    xs.forEach(xx=>line(ctx,[xx,6],[xx,h-6],'rgba(47,111,143,.7)',.8));
+    // horizontal uniform
+    for(let y=6;y<h-6;y+=(h-12)/6)line(ctx,[6,y],[w-6,y],'rgba(47,111,143,.35)',.6);
+    // highlight worst jump
+    let worst=0,wi=0;for(let i=1;i<xs.length-1;i++){const r=(xs[i+1]-xs[i])/(xs[i]-xs[i-1]);if(r>worst){worst=r;wi=i;}}
+    if(worst>1.3){ctx.fillStyle='rgba(192,57,43,.12)';ctx.fillRect(xs[wi-1],6,xs[wi+1]-xs[wi-1],h-12);}
+  },
+  quiz:{q:"A safe cell-to-cell growth rate is typically kept at or below about:",
+    a:["1.05–1.2","2.0","5.0","No limit needed"],
+    correct:0,fb:"A growth ratio around 1.1–1.2 is a common conservative starting point for smooth transitions; the right value depends on geometry, solver and gradients. Big jumps raise truncation error and hurt quality."}
+ },
+ {
+  t:"Too many cells without purpose",
+  d:"A huge mesh isn't automatically better — quality and targeted refinement matter more than raw count.",
+  why:`<h4>What's happening</h4>Doubling cells uniformly multiplies cost (and often
+   round-off) without adding accuracy once the solution is grid-independent. Poorly placed
+   cells waste effort while critical regions may still be under-resolved.
+   <h4>Fix it</h4>Refine <em>where the physics lives</em>. Judge on quality + independence,
+   not the cell counter.`,
+  ctrl:[{k:'cells',lab:'Cell count',min:1,max:100,v:20}],
+  metrics:s=>{const M=(0.05*Math.pow(s.cells,2)).toFixed(1);
+    const acc=Math.min(99,60+38*(1-Math.exp(-s.cells/12))).toFixed(0);
+    return [['Cells (M)',M,'warn'],['Solve cost (rel.)',(Math.pow(s.cells/20,1.6)).toFixed(1)+'×',s.cells>50?'err':'warn'],
+            ['Accuracy',acc+'%',acc>=95?'ok':'warn']];},
+  draw:(ctx,s,mode)=>{const w=ctx.__w,h=ctx.__h;
+    // gauge showing accuracy vs cost curve
+    const pad=30;const gx=pad,gy=h-pad,gw=w-2*pad,gh=h-2*pad;
+    ctx.strokeStyle=C.line;ctx.lineWidth=1;line(ctx,[gx,gy],[gx+gw,gy],C.line,1);line(ctx,[gx,gy],[gx,gy-gh],C.line,1);
+    ctx.fillStyle=C.ink;ctx.font='10px sans-serif';ctx.fillText('accuracy',gx+2,gy-gh+2);ctx.fillText('cells →',gx+gw-38,gy+12);
+    // accuracy curve (saturating)
+    ctx.strokeStyle=C.good;ctx.lineWidth=2;ctx.beginPath();
+    for(let i=0;i<=100;i++){const x=gx+gw*i/100;const a=1-Math.exp(-i/12);const y=gy-gh*a;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+    ctx.stroke();
+    // marker for current cells
+    const cx=gx+gw*(mode==='right'?18:s.cells)/100;const cv=1-Math.exp(-(mode==='right'?18:s.cells)/12);
+    const cy=gy-gh*cv;
+    ctx.fillStyle=mode==='right'?C.good:(s.cells>50?C.bad:C.accent);
+    ctx.beginPath();ctx.arc(cx,cy,5,0,7);ctx.fill();
+    ctx.fillStyle=C.ink;ctx.font='11px sans-serif';
+    ctx.fillText(mode==='right'?'sweet spot':(s.cells>50?'wasted cost':'here'),cx-14,cy-9);
+    // cost shading past knee
+    ctx.fillStyle='rgba(192,57,43,.08)';ctx.fillRect(gx+gw*0.45,gy-gh,gw*0.55,gh);
+  },
+  quiz:{q:"After a solution is grid-independent, adding more cells mainly buys you:",
+    a:["More accuracy","More compute cost","Better boundary conditions","Lower skewness"],
+    correct:1,fb:"Past grid independence, extra cells add cost without meaningful accuracy. More cells ≠ better results."}
+ },
+ {
+  t:"No mesh-independence study",
+  d:"If key results keep changing with finer mesh, the solution is not yet grid-converged. A plateau alone does not prove independence.",
+  why:`<h4>What's happening</h4>A single mesh tells you little about numerical error. You
+   estimate that error by refining systematically and watching a key quantity (drag, ΔP, Nu)
+   settle. A plateau on the plot is necessary but not sufficient — it does not by itself
+   prove grid independence.
+   <h4>Fix it</h4>Run 3–4 systematically refined meshes with adequate iterative convergence
+   on each, consistent schemes and models, then estimate discretization uncertainty (GCI /
+   Richardson). Report refinement ratios, apparent order, extrapolated value and GCI. This is
+   solution verification, not validation.`,
+  ctrl:[{k:'pt',lab:'Meshes tested',min:1,max:6,v:1}],
+  metrics:s=>[['Meshes tested',s.pt,s.pt>=4?'ok':s.pt>=3?'warn':'err'],
+              ['On plateau?',s.pt>=4?'Yes':s.pt>=3?'Approaching':'Unknown',s.pt>=4?'ok':s.pt>=3?'warn':'err']],
+  draw:(ctx,s,mode)=>{const w=ctx.__w,h=ctx.__h;const pad=32;
+    const gx=pad,gy=h-pad,gw=w-2*pad,gh=h-2*pad;
+    ctx.strokeStyle=C.line;line(ctx,[gx,gy],[gx+gw,gy],C.line,1);line(ctx,[gx,gy],[gx,gy-gh],C.line,1);
+    ctx.fillStyle=C.ink;ctx.font='10px sans-serif';ctx.fillText('ΔP (Pa)',gx+2,gy-gh+2);ctx.fillText('# cells (log)',gx+gw-56,gy+12);
+    // converging data points
+    const N=mode==='right'?6:s.pt;
+    const xs=[0.08,0.22,0.4,0.58,0.75,0.9];
+    const conv=k=>0.25+0.65*(1-Math.exp(-k*1.1)); // approaches ~0.9
+    ctx.strokeStyle=C.steel;ctx.lineWidth=2;ctx.beginPath();
+    for(let i=0;i<N;i++){const x=gx+gw*xs[i];const y=gy-gh*conv(i);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+    ctx.stroke();
+    for(let i=0;i<N;i++){const x=gx+gw*xs[i];const y=gy-gh*conv(i);
+      ctx.fillStyle=C.steel;ctx.beginPath();ctx.arc(x,y,4,0,7);ctx.fill();}
+    // plateau band if enough points
+    if(N>=4){ctx.strokeStyle=C.good;ctx.setLineDash([4,3]);ctx.lineWidth=1;
+      const yp=gy-gh*0.9;line(ctx,[gx,yp],[gx+gw,yp],C.good,1);ctx.setLineDash([]);
+      ctx.fillStyle=C.good;ctx.font='11px sans-serif';ctx.fillText('approaching plateau',gx+gw*0.33,yp-6);}
+  },
+  quiz:{q:"A plateau on a refinement plot is best described as:",
+    a:["Proof the result is physically correct","Necessary but not sufficient evidence of grid convergence","Proof of validation against experiment","Irrelevant to numerical error"],
+    correct:1,fb:"A plateau is necessary but not sufficient. Defensible verification also needs systematic refinement, iterative convergence, consistent schemes, an apparent-order check and a GCI estimate. It is verification, not validation."}
+ },
+ {
+  t:"Checking only mesh statistics",
+  animated:true,
+  d:"A good average quality doesn't guarantee a good model — inspect the worst cells and where they sit.",
+  why:`<h4>What's happening</h4>Average skewness can look great while a handful of poor
+   cells sit exactly where the physics matters (leading edge, wake, hot spot). The average
+   hides them, so the solution can still suffer.
+   <h4>Fix it</h4>Inspect the maximum and the distribution (not just the mean), and where the
+   worst cells sit relative to the flow. A high-skew cell is a strong review trigger,
+   especially in critical regions — thresholds themselves are solver- and metric-dependent.`,
+  ctrl:[{k:'zoom',lab:'Inspect critical region',min:0,max:100,v:0}],
+  metrics:s=>[['Average quality','0.93 (looks great)','ok'],
+              ['Worst cell (critical)',s.zoom>60?'0.12 (found it!)':'hidden by average',s.zoom>60?'err':'warn']],
+  draw:(ctx,s,mode,t=0)=>{const w=ctx.__w,h=ctx.__h;
+    const zoom=mode==='right'?90:s.zoom;
+    // background mesh, mostly clean
+    for(let x=6;x<w-6;x+=16)line(ctx,[x,6],[x,h-6],'rgba(47,111,143,.35)',.6);
+    for(let y=6;y<h-6;y+=16)line(ctx,[6,y],[w-6,y],'rgba(47,111,143,.35)',.6);
+    const cx=w*0.42,cy=h*0.5,r=Math.min(w,h)*0.14;
+    // ---- animated Kármán vortex street in the wake ----
+    // alternating shed vortices drift downstream
+    const shed=1.1;                          // sheds per second (per side)
+    const driftV=w*0.16;                     // px/s downstream
+    for(let side=0;side<2;side++){
+      for(let k=0;k<4;k++){
+        const age=((t*shed)-(side*0.5)-k);   // seconds since shed (staggered)
+        if(age<0)continue;
+        const vx=cx+r+age*driftV;
+        if(vx>w-6)continue;
+        const vy=cy+(side?1:-1)*r*0.7;
+        const rad=6+age*4;
+        const alpha=Math.max(0,0.5-age*0.11);
+        ctx.strokeStyle=`rgba(47,111,143,${alpha})`;ctx.lineWidth=1.4;
+        ctx.beginPath();
+        // little spiral to read as a vortex
+        const dir=side?1:-1, spin=t*3*dir;
+        for(let a=0;a<6.0;a+=0.3){const rr=rad*a/6;const ang=a*dir+spin;
+          const px=vx+Math.cos(ang)*rr, py=vy+Math.sin(ang)*rr;
+          a?ctx.lineTo(px,py):ctx.moveTo(px,py);}
+        ctx.stroke();
+      }
+    }
+    // cylinder on top
+    ctx.fillStyle='#dfe8ec';ctx.strokeStyle=C.wall;ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fill();ctx.stroke();
+    // wake region with bad cells, revealed by zoom — sits right where vortices are
+    if(zoom>60){
+      const bx=cx+r,by=cy-r*0.9;const bw=w*0.30,bh=r*1.8;
+      ctx.fillStyle='rgba(192,57,43,.10)';ctx.fillRect(bx,by,bw,bh);
+      for(let i=0;i<5;i++)for(let j=0;j<3;j++){
+        const x=bx+i*bw/5,y=by+j*bh/3;
+        poly(ctx,[[x,y],[x+bw/5+Math.sin(i+j)*6,y+2],[x+bw/5,y+bh/3+Math.cos(i)*6],[x-2,y+bh/3]],C.bad,'rgba(192,57,43,.16)',1);
+      }
+      ctx.fillStyle=C.bad;ctx.font='11px sans-serif';ctx.fillText('poor cells where the wake sheds!',bx-6,by-4);
+    } else {
+      ctx.fillStyle='#20465f';ctx.font='11px sans-serif';
+      ctx.fillText('looks fine on average… slide to inspect →',w*0.30,16);
+    }
+  },
+  quiz:{q:"Why can a great average mesh quality still ruin a simulation?",
+    a:["Averages are always wrong","A few bad cells in critical regions are masked","It uses too few cells","Averages ignore the solver"],
+    correct:1,fb:"The mean hides the worst cells. If those sit in a critical region, results suffer despite a good average."}
+ }
+];
+
+// crude quad skewness estimate from 4 pts (0 good -> 1 bad)
+function quadSkew(p){
+  function ang(a,b,c){const v1=[a[0]-b[0],a[1]-b[1]],v2=[c[0]-b[0],c[1]-b[1]];
+    const d=(v1[0]*v2[0]+v1[1]*v2[1])/(Math.hypot(...v1)*Math.hypot(...v2)+1e-9);
+    return Math.acos(Math.max(-1,Math.min(1,d)));}
+  const A=[ang(p[3],p[0],p[1]),ang(p[0],p[1],p[2]),ang(p[1],p[2],p[3]),ang(p[2],p[3],p[0])];
+  const ideal=Math.PI/2;let mx=0;A.forEach(a=>{mx=Math.max(mx,Math.abs(a-ideal)/ideal);});
+  return Math.min(1,mx);
+}
+
+// ================= BUILD UI =================
+const grid=document.getElementById('grid');
+const registry=[];
+const stoppers=[];
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const REDUCED_T=1.7; // representative frozen pose for animated cards when motion is off
+MISTAKES.forEach((mk,i)=>{
+  const card=document.createElement('div');card.className='card';
+  const state={};mk.ctrl.forEach(c=>state[c.k]=c.v);
+
+  card.innerHTML=`
+    <button class="head" id="lesson-head-${i}" type="button" aria-expanded="false" aria-controls="lesson-body-${i}">
+      <span class="idx" style="background:${IDXCOL[i]}">${String(i+1).padStart(2,'0')}</span>
+      <span><span class="title" role="heading" aria-level="2">${mk.t}</span><span class="desc">${mk.d}</span></span>
+      <span class="chev" aria-hidden="true">⌄</span>
+    </button>
+    <div class="body" id="lesson-body-${i}" role="region" aria-labelledby="lesson-head-${i}">
+      <div class="controls" id="ctrl${i}"></div>
+      <div class="metricrow" id="met${i}"></div>
+      <div class="demo">
+        <div class="panel bad"><div class="lbl">Your mesh (drive it)</div>
+          <canvas id="cl${i}" width="360" height="250"></canvas></div>
+        <div class="panel good"><div class="lbl">Good mesh</div>
+          <canvas id="cr${i}" width="360" height="250"></canvas></div>
+      </div>
+      <div class="why">${mk.why}</div>
+      <div class="quiz" id="qz${i}">
+        <div class="q">${mk.quiz.q}</div>
+        ${mk.quiz.a.map((a,ai)=>`<button data-i="${ai}">${a}</button>`).join('')}
+        <div class="fb" role="status" aria-live="polite"></div>
+      </div>
+    </div>`;
+  grid.appendChild(card);
+
+  // controls
+  const cbox=card.querySelector('#ctrl'+i);
+  mk.ctrl.forEach(c=>{
+    const lab=document.createElement('label');
+    lab.innerHTML=`${c.lab} <input type="range" min="${c.min}" max="${c.max}" value="${c.v}">
+      <span class="val"></span>`;
+    const inp=lab.querySelector('input');const val=lab.querySelector('.val');
+    inp.addEventListener('input',()=>{state[c.k]=+inp.value;val.textContent=fmt(c,state[c.k]);render();});
+    val.textContent=fmt(c,c.v);cbox.appendChild(lab);
+  });
+
+  function fmt(c,v){if(c.k==='grow'||c.k==='skew')return (c.k==='grow'?(v/100).toFixed(2):v);return v;}
+
+  const metBox=card.querySelector('#met'+i);
+  const cl=card.querySelector('#cl'+i), cr=card.querySelector('#cr'+i);
+
+  let rafId=null;
+  function paint(t){
+    const ctxL=fit(cl),ctxR=fit(cr);
+    ctxL.clearRect(0,0,ctxL.__w,ctxL.__h);ctxR.clearRect(0,0,ctxR.__w,ctxR.__h);
+    mk.draw(ctxL,state,'left',t);mk.draw(ctxR,state,'right',t);
+  }
+  function render(){
+    // metrics (static, updated on interaction only)
+    metBox.innerHTML=mk.metrics(state).map(m=>
+      `<span class="metric ${m[2]}">${m[0]}: <b>${m[1]}</b></span>`).join('');
+    // if animated & motion allowed & card open -> run loop; else one frame
+    stopAnim();
+    if(mk.animated && !REDUCED && card.classList.contains('open')){
+      const start=performance.now();
+      const loop=now=>{paint((now-start)/1000);rafId=requestAnimationFrame(loop);};
+      rafId=requestAnimationFrame(loop);
+    } else {
+      // static frame; REDUCED_T gives animated cards a representative pose
+      paint(mk.animated?REDUCED_T:0);
+    }
+  }
+  function stopAnim(){if(rafId){cancelAnimationFrame(rafId);rafId=null;}}
+  registry.push(render);
+  stoppers.push(stopAnim);
+
+  // quiz
+  const qz=card.querySelector('#qz'+i);const fb=qz.querySelector('.fb');
+  qz.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const chosen=+b.dataset.i;
+      qz.querySelectorAll('button').forEach(x=>x.disabled=true);
+      if(chosen===mk.quiz.correct){b.classList.add('right');}
+      else{b.classList.add('wrong');qz.querySelectorAll('button')[mk.quiz.correct].classList.add('right');}
+      fb.style.display='block';fb.textContent=mk.quiz.fb;
+    });
+  });
+
+  // toggle open
+  card.querySelector('.head').addEventListener('click',e=>{
+    card.classList.toggle('open');
+    e.currentTarget.setAttribute('aria-expanded',String(card.classList.contains('open')));
+    if(card.classList.contains('open'))requestAnimationFrame(render);
+    else stopAnim();
+  });
+});
+
+// pause all animation when tab hidden; resume open cards when visible
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){stoppers.forEach(s=>s());}
+  else{MISTAKES.forEach((m,i)=>{if(grid.children[i].classList.contains('open'))registry[i]();});}
+});
+
+// open the first card by default
+grid.firstChild.classList.add('open');
+grid.firstChild.querySelector('.head').setAttribute('aria-expanded','true');
+addEventListener('resize',()=>{document.querySelectorAll('.card.open').forEach((c,i)=>{});registry.forEach(r=>{});
+  // re-render open cards
+  MISTAKES.forEach((m,i)=>{const card=grid.children[i];if(card.classList.contains('open'))registry[i]();});});
+requestAnimationFrame(()=>registry[0]());
+
+// ===================== NAV / TABS / CALCULATOR INIT =====================
+// build the four hub calculators
+buildYplus(document.getElementById('tab-yplus'));
+buildPipe(document.getElementById('tab-pipe'));
+buildInflation(document.getElementById('tab-infl'));
+buildGCI(document.getElementById('tab-gci'));
+buildQuality(document.getElementById('tab-qual'));
+document.querySelectorAll('.out').forEach(out=>{out.setAttribute('aria-live','polite');out.setAttribute('aria-atomic','true');});
+
+// top-level view switch
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#nav button').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-selected',String(x===b));x.tabIndex=x===b?0:-1;});
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+b.dataset.view).classList.add('active');
+  if(b.dataset.view==='tools'){const f=document.querySelector('.tabpane.active input,.tabpane.active select');if(f)f.dispatchEvent(new Event('input'));}
+  window.scrollTo({top:0,behavior:REDUCED?'auto':'smooth'});
+});
+// tab switch inside hub
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#tabs button').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-selected',String(x===b));x.tabIndex=x===b?0:-1;});
+  document.querySelectorAll('.tabpane').forEach(t=>t.classList.remove('active'));
+  const pane=document.getElementById('tab-'+b.dataset.tab);pane.classList.add('active');
+  // canvases sized 0 while hidden — nudge a recompute by firing input on first field
+  const f=pane.querySelector('input,select');if(f)f.dispatchEvent(new Event('input'));
+});
+// Arrow-key navigation for both tab sets.
+document.querySelectorAll('[role="tablist"]').forEach(list=>list.addEventListener('keydown',e=>{
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+  const tabs=[...list.querySelectorAll('[role="tab"]')],current=tabs.indexOf(document.activeElement);
+  if(current<0)return;e.preventDefault();
+  const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(current+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+  tabs[next].focus();tabs[next].click();
+}));
+
+// inline calculators on the relevant mistake cards (#3 y+, #4 inflation growth, #6 GCI, #7 quality)
+function addInline(cardIdx,title,builder){
+  const body=grid.children[cardIdx].querySelector('.body');
+  const d=document.createElement('details');d.className='inline-calc';
+  const host=document.createElement('div');
+  d.innerHTML=`<summary>▸ ${title}</summary>`;d.appendChild(host);
+  // insert before quiz
+  const quiz=body.querySelector('.quiz');body.insertBefore(d,quiz);
+  let built=false;
+  d.addEventListener('toggle',()=>{if(d.open&&!built){builder(host);built=true;}
+    else if(d.open){const f=host.querySelector('input,select');if(f)f.dispatchEvent(new Event('input'));}});
+}
+addInline(2,'Open y⁺ / first-cell estimator (flat plate)',buildYplus);
+addInline(1,'Open inflation-layer builder',buildInflation);      // refinement card
+addInline(5,'Open GCI / solution-verification calculator',buildGCI);      // independence card
+addInline(6,'Open mesh-quality reference',buildQuality);         // critical-region card
+
+// Focused lesson mode used by the seven-card GitHub Pages launcher.
+const requestedLesson=Number(new URLSearchParams(location.search).get('lesson'));
+if(Number.isInteger(requestedLesson)&&requestedLesson>=1&&requestedLesson<=7){
+  document.body.classList.add('single-lesson');
+  const lessonIndex=requestedLesson-1,selectedCard=grid.children[lessonIndex],lesson=MISTAKES[lessonIndex];
+  [...grid.children].forEach((card,i)=>{
+    card.classList.toggle('lesson-hidden',i!==lessonIndex);
+    card.classList.toggle('open',i===lessonIndex);
+    card.querySelector('.head').setAttribute('aria-expanded',String(i===lessonIndex));
+    if(i!==lessonIndex)stoppers[i]();
+  });
+  document.title=`${String(requestedLesson).padStart(2,'0')} · ${lesson.t} — CFD Mesh Lab`;
+  document.querySelector('.hero-kicker').textContent=`CFD Mesh Lab · Lesson ${String(requestedLesson).padStart(2,'0')} of 07`;
+  document.querySelector('header.top h1').innerHTML=`<em>${String(requestedLesson).padStart(2,'0')}.</em> ${lesson.t}`;
+  document.querySelector('header.top .sub').textContent=lesson.d;
+  document.querySelector('header.top .tag').textContent='Interactive lesson';
+  document.querySelector('.intro').innerHTML='<b>Learning path:</b> adjust the controls, compare the bad and good meshes, read the engineering explanation, then complete the knowledge check.';
+  const prev=requestedLesson>1?`<a href="lesson.html?lesson=${requestedLesson-1}">← Previous lesson</a>`:'<span></span>';
+  const next=requestedLesson<7?`<a class="next" href="lesson.html?lesson=${requestedLesson+1}">Next lesson →</a>`:'<span></span>';
+  const nav=document.createElement('nav');nav.className='lesson-nav';nav.setAttribute('aria-label','Lesson navigation');
+  nav.innerHTML=`${prev}<a class="all" href="index.html">All seven lessons</a>${next}`;
+  grid.before(nav);
+  const pos=document.createElement('p');pos.className='lesson-position';pos.textContent=`Lesson ${requestedLesson} of 7`;
+  selectedCard.before(pos);
+  requestAnimationFrame(()=>registry[lessonIndex]());
+}
+</script>
+</body>
+</html>
