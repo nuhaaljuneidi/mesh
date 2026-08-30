@@ -25,7 +25,7 @@
     font-weight:700;font-size:13px;padding:6px 12px;border-radius:4px;
     transform:rotate(-1.5deg)}
   .wrap{max-width:1080px;margin:0 auto;padding:22px 16px 60px}
-  .intro{background:var(--card);border-left:5px solid var(--steel);padding:14px 18px;
+  .intro{background:var(--card);border:1px solid var(--line);padding:14px 18px;
     border-radius:6px;margin:22px 0;font-size:15px}
   .grid{display:grid;gap:18px}
   .card{background:var(--card);border-radius:10px;overflow:hidden;
@@ -147,7 +147,7 @@
   .calc-viz canvas{display:block;width:100%;height:auto;background:#fff}
   .split{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
   /* QA-added styles */
-  .warn-box{background:#fff4e5;border:1px solid #f0c07a;border-left:4px solid #e08a1b;
+  .warn-box{background:#fff4e5;border:1px solid #f0c07a;
     border-radius:6px;padding:9px 12px;margin:12px 0;font-size:12.5px;color:#7a4e08}
   .warn-box div{margin:3px 0}
   .assume{font-size:11.5px;color:#5a6b76;margin:12px 0 0;line-height:1.45;
@@ -208,7 +208,7 @@
   header.top p.sub{position:relative;z-index:1;max-width:720px;margin:28px 0 0 132px;font-size:17px;
     line-height:1.65;color:#cbd5e1}
   header.top .tag{position:relative;z-index:1;margin:24px 0 0 132px;background:transparent;color:#fff;
-    border-left:3px solid #34d399;padding:5px 0 5px 14px;border-radius:0;transform:none;font-family:var(--mono);font-weight:500}
+    border:0;padding:5px 0;border-radius:0;transform:none;font-family:var(--mono);font-weight:500}
   .nav{top:0;min-height:64px;padding:9px max(16px,calc((100vw - 1180px)/2));gap:0;
     background:rgba(248,250,252,.97);border-bottom:1px solid #cbd5e1;box-shadow:0 4px 18px rgba(15,23,42,.06)}
   .nav:before{content:'CFD / MESH LAB';align-self:center;margin-right:auto;color:var(--steel);
@@ -240,7 +240,7 @@
   .card.open>.head .desc{color:#cbd5e1}
   .card>.head .chev{font:600 20px var(--mono);color:inherit;text-align:center}
   .body{padding:6px 24px 28px;border-top:0}
-  .controls{border:0;border-left:4px solid var(--blue);border-radius:0;background:#edf4ff;padding:16px 18px;margin:20px 0 14px}
+  .controls{border:1px solid #cbd8df;border-radius:5px;background:#edf4ff;padding:16px 18px;margin:20px 0 14px}
   .controls label{font-size:13px;gap:8px}.controls input[type=range]{min-height:28px}
   .metricrow{gap:6px;margin:0 0 18px}
   .metric{border-radius:0;border-color:#cbd5e1;padding:7px 10px;background:#fff;font-size:12px}
@@ -249,7 +249,7 @@
   .panel{border:0;border-radius:0}.panel .lbl{padding:9px 12px;font:600 11px var(--mono);letter-spacing:.1em}
   .panel.bad .lbl{background:#7f1d1d}.panel.good .lbl{background:#065f46}
   .why{font-size:15px;max-width:900px}.why h4{font:600 12px var(--mono);letter-spacing:.12em;color:var(--steel);margin-top:22px}
-  .quiz{margin-top:24px;border:1px solid #d6b755;border-left:5px solid #d6a800;border-radius:0;background:#fffdf2;padding:18px}
+  .quiz{margin-top:24px;border:1px solid #d6b755;border-radius:5px;background:#fffdf2;padding:18px}
   .quiz .q{font-size:15px;margin-bottom:12px}.quiz button{min-height:44px;border-radius:0;padding:10px 13px}
   .quiz button:hover:not(:disabled){background:#eff6ff;border-color:var(--blue)}
   .quiz button.right{background:#dcfce7}.quiz button.wrong{background:#fee2e2}
@@ -264,9 +264,9 @@
   .calc h3,.refs h3,.vv h3{font-size:20px;letter-spacing:-.02em}.calc .note{font-size:13px;line-height:1.6;max-width:850px}
   .field{gap:6px}.field label{font-size:13px}.field input,.field select{min-height:44px;border-radius:0;border-color:#94a3b8;background:#fff}
   .field input:hover,.field select:hover{border-color:var(--steel)}
-  .out .hero{border-radius:0;border-left:5px solid var(--good);padding:16px;background:#ecfdf5}
+  .out .hero{border:1px solid #b9d7c9;border-radius:5px;padding:16px;background:#ecfdf5}
   .out .row{padding:8px 4px}.badge{border-radius:2px;padding:3px 8px}.unit-toggle{border-radius:0}.unit-toggle button{min-height:40px}
-  .warn-box{border-radius:0;border-left-width:5px;padding:12px 14px}
+  .warn-box{border-radius:5px;border-width:1px;padding:12px 14px}
   .calc-viz{border-radius:0}.qtable{display:block;max-width:100%;overflow-x:auto;white-space:normal}.qtable th{background:var(--steel);color:#fff}
   .inline-calc summary{min-height:44px;display:flex;align-items:center;border-bottom:1px solid #cbd5e1}
   .refs,.vv{margin-top:18px}.refs h4{font-family:var(--mono)}
@@ -352,6 +352,11 @@
   .inline-calc summary{color:#ddc965;border-color:#41484d}
   @media(max-width:760px){header.top{min-height:560px;padding-top:52px}.hero-kicker{margin-bottom:48px}.hero-line .num{right:12px;left:auto;top:120px;font-size:128px}header.top h1{font-size:43px}}
 </style>
+<style id="light-academic-theme">
+  :root{color-scheme:light;--ink:#18212b;--ink2:#4d5b68;--paper:#f7f5ef;--card:#fff;--bad:#a33a32;--good:#286b53;--accent:#a67c28;--line:#d8d4ca;--steel:#294f69;--blue:#416f8e;--navy:#eef2f2;--shadow:0 8px 26px rgba(35,48,58,.08);--sans:'Atkinson Hyperlegible','Segoe UI',Arial,sans-serif;--serif:'Crimson Pro',Georgia,serif}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);background-image:none}header.top{min-height:420px;padding-top:64px;padding-bottom:58px;background:#e9eeee;color:var(--ink);border-bottom:1px solid #cdd6d7}header.top:before,header.top:after{display:none}.hero-kicker{color:var(--steel);margin-bottom:38px}.hero-kicker:after{display:none}.hero-line{display:grid;grid-template-columns:auto 1fr;max-width:940px}.hero-line .num{position:static!important;color:#b38b37!important;-webkit-text-stroke:0!important;font-size:clamp(76px,12vw,132px)!important;font-weight:500!important}header.top h1{font-family:var(--serif);font-size:clamp(40px,5.5vw,66px);font-weight:500;line-height:1.04;color:var(--ink)}header.top h1 em{color:var(--steel)}header.top p.sub{margin-left:0;color:#425563;font-size:18px}.author-signature{color:var(--ink);font-family:var(--serif);font-weight:500}.author-signature span{color:var(--steel);font-family:var(--sans)}header.top .tag{color:#6c5523;margin-left:0;border-left:0}.nav{background:rgba(255,255,255,.97);border-color:#d4d9d8;box-shadow:0 4px 14px rgba(30,45,55,.05)}.nav:before{color:var(--steel)}.nav button{color:#53606a}.nav button:hover{color:var(--ink);background:#edf1f1}.nav button.active{color:var(--steel);border-color:#b38b37}
+  .intro,.card,.calc,.refs,.vv{background:#fff;color:var(--ink);border-color:#d8d4ca;box-shadow:var(--shadow)}.intro{padding:22px 24px}.intro:before{display:none}.card{border-radius:6px}.card:hover{border-color:#9eaaa9;transform:none}.card.open{border-color:#91a4aa}.card>.head,.card.open>.head{background:#fff;color:var(--ink);border-radius:6px}.card>.head:hover{background:#f4f6f5}.card>.head .idx,.card.open>.head .idx{color:var(--steel);border-color:#9cadb2!important}.card>.head .title{font-family:var(--serif);font-size:21px;font-weight:600}.card>.head .desc,.card.open>.head .desc{color:var(--ink2)}.body{background:#fff}.controls,.quiz,.out .hero,.warn-box{border-left:0!important;border-radius:5px}.controls{border:1px solid #cbd8df;background:#f0f5f7}.quiz{border:1px solid #dfd2ab;background:#fffaf0}.out .hero{border:1px solid #b9d7c9;background:#f0f8f4;color:var(--ink)}.warn-box{border:1px solid #e1c99e;background:#fff8eb;color:#694e20}.metric,.field input,.field select{background:#fff;color:var(--ink);border-color:#c8cfce}.panel{background:#f7f7f4}.why{color:var(--ink)}.why h4,.refs h4{color:var(--steel)}.tabs{border-color:#c9cfce}.tabs button{color:#58636a}.tabs button:hover{background:#edf1f1;color:var(--ink)}.tabs button.active{background:var(--steel);color:#fff;border-color:#b38b37}footer.rem{background:#e9eeee;color:var(--ink);border:1px solid #cdd6d7;border-top:3px solid #b38b37}.ask{background:#d7dfdf}.ask .no{background:#fbefed}.ask .yes{background:#edf7f1}.lesson-nav a{background:#fff;color:var(--steel);border-color:#cbd2d1}.lesson-nav a:hover{background:#edf1f1;border-color:#8fa1a4}.lesson-nav .all{color:var(--ink)}.lesson-position{color:#64727a}
+</style>
 <style id="single-lesson-layout">
   body.single-lesson .nav{display:none}
   body.single-lesson header.top{min-height:470px;padding-top:64px;padding-bottom:64px}
@@ -367,6 +372,7 @@
   .lesson-position{text-align:center;color:#c1c3c0;font:500 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;margin:0 0 16px}
   @media(max-width:640px){.lesson-nav{grid-template-columns:1fr 1fr}.lesson-nav .all{grid-column:1/-1;grid-row:2}.lesson-nav a{font-size:12px}}
 </style>
+<style id="single-lesson-light-fix">body.single-lesson .lesson-nav a{background:#fff;color:#294f69;border-color:#cbd2d1}body.single-lesson .lesson-nav a:hover{background:#edf1f1;border-color:#8fa1a4}body.single-lesson .lesson-nav .all{color:#18212b}body.single-lesson .lesson-position{color:#64727a}</style>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to main content</a>
@@ -1545,6 +1551,7 @@ if(Number.isInteger(requestedLesson)&&requestedLesson>=1&&requestedLesson<=7){
   });
   document.title=`${String(requestedLesson).padStart(2,'0')} · ${lesson.t} — CFD Mesh Lab`;
   document.querySelector('.hero-kicker').textContent=`CFD Mesh Lab · Lesson ${String(requestedLesson).padStart(2,'0')} of 07`;
+  document.querySelector('header.top .num').textContent=String(requestedLesson).padStart(2,'0');
   document.querySelector('header.top h1').innerHTML=`<em>${String(requestedLesson).padStart(2,'0')}.</em> ${lesson.t}`;
   document.querySelector('header.top .sub').textContent=lesson.d;
   document.querySelector('header.top .tag').textContent='Interactive lesson';
