@@ -373,6 +373,7 @@
   @media(max-width:640px){.lesson-nav{grid-template-columns:1fr 1fr}.lesson-nav .all{grid-column:1/-1;grid-row:2}.lesson-nav a{font-size:12px}}
 </style>
 <style id="single-lesson-light-fix">body.single-lesson .lesson-nav a{background:#fff;color:#294f69;border-color:#cbd2d1}body.single-lesson .lesson-nav a:hover{background:#edf1f1;border-color:#8fa1a4}body.single-lesson .lesson-nav .all{color:#18212b}body.single-lesson .lesson-position{color:#64727a}</style>
+<link rel="stylesheet" href="lesson-theme.css">
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to main content</a>
@@ -1564,6 +1565,41 @@ if(Number.isInteger(requestedLesson)&&requestedLesson>=1&&requestedLesson<=7){
   const pos=document.createElement('p');pos.className='lesson-position';pos.textContent=`Lesson ${requestedLesson} of 7`;
   selectedCard.before(pos);
   requestAnimationFrame(()=>registry[lessonIndex]());
+}
+</script>
+<script>
+if(document.body.classList.contains('single-lesson')){
+  const all=document.querySelector('.lesson-nav .all');
+  if(all){all.href='index.html';all.textContent='All lessons';}
+  const copyright=document.createElement('footer');
+  copyright.className='site-copyright';
+  copyright.innerHTML='<strong>© 2026 Dr. Nuha Aljuneidi.</strong> All rights reserved. · CFD Mesh Lab';
+  document.body.appendChild(copyright);
+  if(new URLSearchParams(location.search).get('lesson')==='1'){
+    const card=document.querySelector('.card:not(.lesson-hidden)');
+    const controls=card?.querySelector('.controls');
+    const range=controls?.querySelector('input[type="range"]');
+    if(range){
+      range.closest('label').style.display='none';
+      const presets=document.createElement('div');
+      presets.className='preset-control';
+      presets.innerHTML='<span class="preset-label">Cell distortion</span><div class="preset-buttons" role="group" aria-label="Cell distortion preset"><button data-value="10">Good</button><button data-value="50">Marginal</button><button data-value="85">Poor</button></div>';
+      controls.prepend(presets);
+      const buttons=[...presets.querySelectorAll('button')];
+      let presetAnimation=0;
+      const select=(value,instant=false)=>{
+        const target=Number(value),start=Number(range.value),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+        cancelAnimationFrame(presetAnimation);
+        buttons.forEach(button=>button.classList.toggle('active',Number(button.dataset.value)===target));
+        if(instant||reduced){range.value=target;range.dispatchEvent(new Event('input',{bubbles:true}));return;}
+        const began=performance.now(),duration=420;
+        const animate=now=>{const p=Math.min(1,(now-began)/duration),eased=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;range.value=Math.round(start+(target-start)*eased);range.dispatchEvent(new Event('input',{bubbles:true}));if(p<1)presetAnimation=requestAnimationFrame(animate);};
+        presetAnimation=requestAnimationFrame(animate);
+      };
+      buttons.forEach(button=>button.addEventListener('click',()=>select(button.dataset.value)));
+      select(10,true);
+    }
+  }
 }
 </script>
 </body>
