@@ -374,6 +374,15 @@
 </style>
 <style id="single-lesson-light-fix">body.single-lesson .lesson-nav a{background:#fff;color:#294f69;border-color:#cbd2d1}body.single-lesson .lesson-nav a:hover{background:#edf1f1;border-color:#8fa1a4}body.single-lesson .lesson-nav .all{color:#18212b}body.single-lesson .lesson-position{color:#64727a}</style>
 <link rel="stylesheet" href="lesson-theme.css">
+<style id="lesson-six-refinement-animation">
+  .refinement-demo{flex:0 0 auto;align-self:end;min-height:44px;padding:10px 16px;border:1px solid #294f69;background:#294f69;color:#fff;border-radius:4px;font-weight:700;cursor:pointer}
+  .refinement-demo:hover:not(:disabled){background:#1f4057}
+  .refinement-demo:disabled{cursor:wait;opacity:.78}
+  .refinement-demo:focus-visible{outline:3px solid #a67c28;outline-offset:3px}
+  #lesson-body-5.demo-running .demo{box-shadow:0 0 0 3px rgba(166,124,40,.18);transition:box-shadow .25s ease}
+  @media(max-width:640px){.refinement-demo{width:100%}}
+  @media(prefers-reduced-motion:reduce){#lesson-body-5.demo-running .demo{transition:none}}
+</style>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to main content</a>
@@ -1601,6 +1610,62 @@ if(document.body.classList.contains('single-lesson')){
     }
   }
 }
+</script>
+<script>
+(() => {
+  if(new URLSearchParams(location.search).get('lesson')!=='6')return;
+  const controls=document.querySelector('#ctrl5');
+  const range=controls?.querySelector('input[type="range"]');
+  const lessonBody=document.querySelector('#lesson-body-5');
+  if(!controls||!range||!lessonBody)return;
+
+  const button=document.createElement('button');
+  button.type='button';
+  button.className='refinement-demo';
+  button.textContent='Animate refinement';
+  button.setAttribute('aria-label','Animate mesh refinement from coarse to fine');
+  controls.appendChild(button);
+
+  const update=value=>{
+    range.value=String(value);
+    range.dispatchEvent(new Event('input',{bubbles:true}));
+  };
+
+  button.addEventListener('click',()=>{
+    const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const low=Number(range.min)||2;
+    const high=Number(range.max)||6;
+    if(reduced){
+      update(high);
+      button.textContent='Refinement complete';
+      return;
+    }
+
+    button.disabled=true;
+    button.textContent='Refining mesh…';
+    lessonBody.classList.add('demo-running');
+    update(low);
+    const started=performance.now();
+    const duration=3000;
+    let lastValue=low;
+
+    const step=now=>{
+      const progress=Math.min(1,(now-started)/duration);
+      const eased=1-Math.pow(1-progress,3);
+      const value=Math.min(high,low+Math.floor(eased*(high-low+1)));
+      if(value!==lastValue){lastValue=value;update(value);}
+      if(progress<1){
+        requestAnimationFrame(step);
+      }else{
+        update(high);
+        lessonBody.classList.remove('demo-running');
+        button.disabled=false;
+        button.textContent='Replay refinement';
+      }
+    };
+    requestAnimationFrame(step);
+  });
+})();
 </script>
 </body>
 </html>
