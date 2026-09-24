@@ -44,6 +44,18 @@ The lesson application includes educational calculators for:
 
 These tools provide initial estimates for teaching and mesh planning. They do not replace solver documentation, solution verification, validation, or engineering judgment.
 
+## Suggested learning pathway
+
+1. Start with **Mesh Strategy by Physics Type** to connect the governing physics to an appropriate mesh family.
+2. Work through **Seven CFD Meshing Mistakes** in order, using each interactive lesson to diagnose a common failure mode.
+3. Use the engineering calculators to check near-wall resolution and refinement choices before running a solver.
+4. Record the mesh metrics, refinement ratio, and quantity of interest for at least three systematically refined meshes.
+5. Finish with a grid-convergence study and explain whether the result is mesh independent.
+
+### Evidence to report
+
+For each exercise, report the selected mesh strategy, key quality metrics, refinement decisions, and one engineering justification. Screenshots should support the reasoning rather than replace it.
+
 ## Run locally
 
 The project uses plain HTML, CSS, and JavaScript and has no build step.
@@ -91,11 +103,3 @@ Assistant Professor of Mechanical Engineering
 Copyright © 2026 Dr. Nuha Aljuneidi. All rights reserved.
 
 Please contact the author before redistributing or adapting the educational materials.
-## Suggested learning pathway
-1. Start with **Mesh Strategy by Physics Type** to connect the governing physics to an appropriate mesh family.
-2. Work through **Seven CFD Meshing Mistakes** in order, using each interactive lesson to diagnose a common failure mode.
-3. Use the engineering calculators to check near-wall resolution and refinement choices before running a solver.
-4. Record the mesh metrics, refinement ratio, and quantity of interest for at least three systematically refined meshes.
-5. Finish with a grid-convergence study and explain whether the result is mesh independent.
-### Evidence to report
-For each exercise, report the selected mesh strategy, key quality metrics, refinement decisions, and one engineering justification. Screenshots should support the reasoning rather than replace it.
